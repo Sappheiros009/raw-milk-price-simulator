@@ -16,6 +16,20 @@ source("R/model.R", encoding = "UTF-8")
 COL <- list(primary = "#1F4E8C", gain = "#1E8A5A", loss = "#C0392B",
             cost = "#8A94A6", supply = "#0F7B6C", ink = "#1B2433", cream = "#FFF8EC")
 PLOT_FONT <- if (.Platform$OS.type == "windows") "Malgun Gothic" else "sans"
+# 웹 배포판(shinylive/webR)에는 한글 폰트가 없으므로 동봉한 나눔고딕을 폰트 폴더에 복사해 쓴다
+# (폰트 폴더가 없는 shinylive.io 링크 실행 시에는 jsDelivr에서 받아온다)
+if (R.version$os == "emscripten") {
+  font_dir <- "/home/web_user/fonts"
+  dir.create(font_dir, recursive = TRUE, showWarnings = FALSE)
+  if (dir.exists("fonts")) {
+    file.copy(list.files("fonts", pattern = "\\.ttf$", full.names = TRUE), font_dir, overwrite = TRUE)
+  } else {
+    for (f in c("NanumGothic-Regular.ttf", "NanumGothic-Bold.ttf")) try(download.file(
+      paste0("https://cdn.jsdelivr.net/gh/google/fonts@main/ofl/nanumgothic/", f),
+      file.path(font_dir, f), mode = "wb", quiet = TRUE), silent = TRUE)
+  }
+  PLOT_FONT <- "NanumGothic"
+}
 
 theme_app <- bs_theme(
   version = 5, primary = COL$primary, success = COL$gain, danger = COL$loss,
