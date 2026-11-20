@@ -66,15 +66,15 @@ HOUSEHOLD <- data.frame(
 # ---- 정책 설명 (Part 1) ---------------------------------------------
 # icon: fontawesome 아이콘 이름
 POLICY_INFO <- list(
-  list(icon = "bullseye", title = "목표",
+  list(icon = "bullseye", bs = "bullseye", title = "목표",
        body = "낙농가 소득 안정과 원유 수급 안정. 3-5년마다 생산자·유업체 협상으로 정하던 원유가격이 매번 갈등을 낳자, 생산비 변동을 원유가격에 자동 반영하도록 바꿨다."),
-  list(icon = "gears", title = "작동 방식",
+  list(icon = "gears", bs = "gear", title = "작동 방식",
        body = "원유기본가격 = 기준원가(통계청 우유생산비 증감 반영) + 변동원가(소비자물가 상승률 반영). 유업체는 농가별 쿼터 물량을 이 가격에 매입한다."),
-  list(icon = "building-columns", title = "운영 주체",
+  list(icon = "building-columns", bs = "bank", title = "운영 주체",
        body = "낙농진흥회(가격 결정·집유), 농림축산식품부(제도 설계), 유가공업체(원유 매입)."),
-  list(icon = "ruler-combined", title = "규모와 변화",
+  list(icon = "ruler-combined", bs = "rulers", title = "규모와 변화",
        body = "2013년 8월 첫 적용 때 전국 원유수취가격이 7월 965.10원에서 8월 1,061.55원으로 96.45원 올랐다. 연평균은 2013년 1,022.92원에서 2025년 1,249.81원이 됐다."),
-  list(icon = "triangle-exclamation", title = "한계: 사실상의 가격하한",
+  list(icon = "triangle-exclamation", bs = "exclamation-triangle", title = "한계: 사실상의 가격하한",
        body = "수요가 줄어도 생산비가 오르면 가격을 낮출 수 없고, 쿼터제(2002)로 유업체는 정해진 물량을 의무 매입한다. 그래서 이 앱은 연동제를 가격하한으로 모형화한다.")
 )
 POLICY_SOURCE <- "산출 공식·도입 배경: 정부 정책 블로그(정책브리핑, blog.naver.com/hellopolicy/220156198742) · 규모·변화: 낙농진흥회 낙농통계광장"
@@ -85,6 +85,7 @@ VALUE_CHAIN <- data.frame(
   step  = c("낙농가", "집유", "유가공업체", "유통·소비자"),
   note  = c("원유 판매자 (쿼터 보유)", "낙농진흥회·조합", "원유 구매자", "가계 파급만 반영"),
   icon  = c("cow", "truck-droplet", "industry", "cart-shopping"),
+  li    = c("cow", "truck", "factory", "cart"),
   scope = c("policy", "policy", "market", "spill")
 )
 
