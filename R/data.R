@@ -86,6 +86,7 @@ VALUE_CHAIN <- data.frame(
   note  = c("원유 판매자 (쿼터 보유)", "낙농진흥회·조합", "원유 구매자", "가계 파급만 반영"),
   icon  = c("cow", "truck-droplet", "industry", "cart-shopping"),
   li    = c("cow", "truck", "factory", "cart"),
+  art   = c("chain-farm", "chain-collect", "chain-processor", "chain-consumer"),  # www/il-*.png
   scope = c("policy", "policy", "market", "spill")
 )
 

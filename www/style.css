@@ -113,6 +113,9 @@ body { background: var(--canvas); color: var(--ink); letter-spacing: -0.01em; }
 .hero-art { width: 330px; height: auto; flex: none; margin-bottom: -6px; }
 .hero-img { max-height: 150px; object-fit: contain; mix-blend-mode: multiply; }
 
+/* 수채 일러스트 (www/il-*.png): 흰 배경을 놓인 칸의 배경색에 녹인다 */
+.art { display: block; object-fit: contain; mix-blend-mode: multiply; }
+
 /* ===== 카드 ===== */
 .card { border: 1px solid var(--line); border-radius: 14px; box-shadow: none; background: #FFFFFF; }
 .card-header { background: #FFFFFF; border-bottom: none; padding: 16px 20px 4px; display: flex; align-items: center; gap: 10px; }
@@ -161,7 +164,7 @@ body { background: var(--canvas); color: var(--ink); letter-spacing: -0.01em; }
 /* ===== 시뮬레이터: 지표 카드 ===== */
 .kpi-row { margin-bottom: 16px; }
 .kpi-card { background: #FFFFFF; border: 1px solid var(--line); border-radius: 14px; padding: 16px 18px; }
-.kpi-icon { display: inline-flex; width: 46px; height: 46px; border-radius: 12px; align-items: center;
+.kpi-icon { display: inline-flex; width: 68px; height: 68px; border-radius: 14px; align-items: center;
   justify-content: center; background: var(--m100); color: var(--g900); margin-bottom: 12px; }
 .kpi-card.loss .kpi-icon { background: var(--r100); color: var(--r600); }
 .kpi-card.cost .kpi-icon { background: var(--c100); color: #4E5A55; }
@@ -186,7 +189,7 @@ body { background: var(--canvas); color: var(--ink); letter-spacing: -0.01em; }
 
 /* ===== 후생 결과 ===== */
 /* 이해관계자 행: 가운데 축 기준 막대 */
-.srow { display: grid; grid-template-columns: 48px minmax(120px, 170px) 1fr 112px; align-items: center;
+.srow { display: grid; grid-template-columns: 58px minmax(120px, 170px) 1fr 112px; align-items: center;
   gap: 14px; padding: 12px 0; border-bottom: 1px solid var(--line); }
 .srow:last-child { border-bottom: none; }
 .srow-icon { color: var(--g900); display: flex; justify-content: center; }
@@ -214,7 +217,7 @@ body { background: var(--canvas); color: var(--ink); letter-spacing: -0.01em; }
 .mrow-val { margin-left: auto; font-weight: 800; font-size: 17px; white-space: nowrap; }
 
 /* 가계 파급 */
-.hrow { display: grid; grid-template-columns: 40px 120px 1px 108px 1fr; gap: 14px; align-items: center;
+.hrow { display: grid; grid-template-columns: 48px 120px 1px 108px 1fr; gap: 14px; align-items: center;
   padding: 12px 0; border-bottom: 1px solid var(--line); }
 .hrow-icon { color: var(--g900); }
 .hrow .vsep { width: 1px; height: 32px; background: var(--line); }
@@ -244,7 +247,9 @@ body { background: var(--canvas); color: var(--ink); letter-spacing: -0.01em; }
 
 .chain { display: flex; gap: 8px; margin: 4px 0 6px; }
 .chain-step { flex: 1; text-align: center; border: 1px solid var(--line); border-radius: 12px; padding: 12px 4px 10px; background: #FFFFFF; }
-.chain-icon { color: var(--faint); margin-bottom: 4px; }
+.chain-icon { color: var(--faint); margin-bottom: 4px; display: flex; justify-content: center; }
+.chain-icon .art { max-width: 100%; height: auto; }
+.chain-step.spill .chain-icon .art { opacity: 0.72; }
 .chain-step.policy { border-color: var(--g600); background: var(--m50); }
 .chain-step.policy .chain-icon { color: var(--g900); }
 .chain-step.market { border-color: var(--r300); background: var(--r100); }
@@ -280,9 +285,9 @@ body { background: var(--canvas); color: var(--ink); letter-spacing: -0.01em; }
 }
 @media (max-width: 768px) {
   .hero-title { font-size: 26px; }
-  .srow { grid-template-columns: 40px 1fr 96px; }
+  .srow { grid-template-columns: 52px 1fr 96px; }
   .srow-track { grid-column: 1 / -1; order: 4; }
-  .hrow { grid-template-columns: 36px 1fr auto; }
+  .hrow { grid-template-columns: 44px 1fr auto; }
   .hrow .vsep { display: none; }
   .hrow > div:last-child { grid-column: 1 / -1; }
   .chain { flex-wrap: wrap; }

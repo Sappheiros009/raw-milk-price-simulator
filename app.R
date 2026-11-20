@@ -59,6 +59,15 @@ li <- function(name, size = 24, cls = "")
   HTML(sprintf('<svg class="li %s" width="%d" height="%d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">%s</svg>',
                cls, size, size, ICON[[name]]))
 
+# 수채 일러스트: www/il-<이름>.png가 있으면 그 그림을, 없으면 같은 이름의 선 아이콘을 쓴다
+# (흰 배경은 CSS mix-blend-mode: multiply로 카드 배경색에 녹인다)
+ART_FILES <- sub("^il-(.*)\\.png$", "\\1", list.files("www", pattern = "^il-.*\\.png$"))
+art <- function(name, w, h = w, fallback = name, cls = "") {
+  if (name %in% ART_FILES) tags$img(src = paste0("il-", name, ".png"), class = trimws(paste("art", cls)),
+                                     width = w, height = h, alt = "")
+  else li(fallback, min(w, h), cls)
+}
+
 # 머리글 일러스트: www/hero.png(또는 .webp)가 있으면 그 그림을, 없으면 아래 SVG를 쓴다
 HERO_FILE <- c("hero.png", "hero.webp")[file.exists(file.path("www", c("hero.png", "hero.webp")))][1]
 HERO_SVG <- HTML('
@@ -142,7 +151,7 @@ page_foot <- function() div(class = "page-foot",
   span(class = "foot-pill", "방법론 검증: 교과서 예제 통과 · 강의 예제 대기"))
 
 side_info_card <- function() div(class = "side-info",
-  span(class = "si-icon", li("milk", 30)),
+  span(class = "si-icon", art("milk", 40)),
   div(div(class = "si-title", "원유 = 가공 전 우유"),
       p("이 앱의 '원유'는 가공(살균, 가공유·치즈 등) 이전의 낙농가 출하 우유를 의미합니다.")))
 
@@ -158,7 +167,7 @@ controls_ui <- function() tagList(
   div(class = "side-rule"),
   div(class = "side-field",
       div(class = "price-row",
-          span(class = "price-icon", li("milk", 42)),
+          span(class = "price-icon", art("milk", 56)),
           div(lab_tip("원유 지지가격", "연동제로 정해지는 원유 1L 가격 Ps. 도입 전 균형가격 P*(980.29원)보다 높으면 가격하한으로 작동합니다."),
               uiOutput("price_big"))),
       div(class = "price-slider",
@@ -212,7 +221,7 @@ side_info_ui <- tagList(
 
 kpi <- function(icon, title, out, tip, caption, cls)
   div(class = paste("kpi-card", cls),
-      span(class = "kpi-icon", li(icon, 28)),
+      span(class = "kpi-icon", art(icon, 58)),
       div(class = "kpi-title", title, info_tip(tip)),
       div(class = "kpi-value", textOutput(out, inline = TRUE)),
       div(class = "kpi-cap", caption))
@@ -290,7 +299,7 @@ market_ui <- tagList(
     xcard("원유 시장 구조와 가치사슬", status = "가짜 값 포함", kind = "red",
           div(class = "chain", lapply(seq_len(nrow(VALUE_CHAIN)), function(i)
             div(class = paste("chain-step", VALUE_CHAIN$scope[i]),
-                div(class = "chain-icon", li(VALUE_CHAIN$li[i], 28)),
+                div(class = "chain-icon", art(VALUE_CHAIN$art[i], 112, 84, fallback = VALUE_CHAIN$li[i])),
                 div(class = "chain-name", VALUE_CHAIN$step[i]),
                 div(class = "chain-note", VALUE_CHAIN$note[i])))),
           div(class = "chain-bracket", span("분석 대상: 원유 거래 (낙농가 → 유가공업체)")),
@@ -588,7 +597,7 @@ server <- function(input, output, session) {
       wd <- abs(v) / mx * 48
       pos <- if (v >= 0) sprintf("left:50%%;width:%.1f%%", wd) else sprintf("right:50%%;width:%.1f%%", wd)
       div(class = "srow",
-          span(class = "srow-icon", li(icon, 36)),
+          span(class = "srow-icon", art(icon, 52)),
           div(div(class = "srow-name", name, tip_icon(tip)), div(class = "srow-sub", sub)),
           div(class = "srow-track", div(class = "axis"), div(class = paste("dbar", cls), style = pos)),
           div(class = paste("srow-val", if (round(v) >= 0) "pos" else "neg"), eok(v)))
@@ -605,7 +614,7 @@ server <- function(input, output, session) {
     r <- res(); w <- why()
     row <- function(icon, name, sub, val, tip)
       div(class = "mrow",
-          span(class = "mrow-icon", li(icon, 30)),
+          span(class = "mrow-icon", art(icon, 44)),
           div(div(class = "mrow-name", name, tip_icon(tip)), div(class = "mrow-sub", sub)),
           div(class = "mrow-val", val))
     div(class = "mbox",
@@ -650,7 +659,7 @@ server <- function(input, output, session) {
     lab <- c("저소득 가구", "고소득 가구")
     rows <- lapply(seq_len(nrow(h)), function(i)
       div(class = "hrow",
-          span(class = "hrow-icon", li("house", 32)),
+          span(class = "hrow-icon", art("house", 44)),
           div(div(class = "hrow-name", lab[i]), div(class = "hrow-sub", h$group[i])),
           span(class = "vsep"),
           div(class = "hrow-val", paste0("월 ", won(h$monthly_won[i]))),
