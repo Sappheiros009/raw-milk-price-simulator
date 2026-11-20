@@ -59,11 +59,15 @@ li <- function(name, size = 24, cls = "")
   HTML(sprintf('<svg class="li %s" width="%d" height="%d" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">%s</svg>',
                cls, size, size, ICON[[name]]))
 
-# 수채 일러스트: www/il-<이름>.png가 있으면 그 그림을, 없으면 같은 이름의 선 아이콘을 쓴다
+# 그림 주소에 파일 내용으로 만든 버전 표시를 붙인다 (그림을 바꾸면 브라우저 캐시의 옛 그림 대신 새 그림을 받는다)
+asset_src <- function(f) paste0(f, "?v=", substr(unname(tools::md5sum(file.path("www", f))), 1, 8))
+
+# 아이콘 일러스트: www/il-<이름>.png가 있으면 그 그림을, 없으면 같은 이름의 선 아이콘을 쓴다
 # (흰 배경은 CSS mix-blend-mode: multiply로 카드 배경색에 녹인다)
 ART_FILES <- sub("^il-(.*)\\.png$", "\\1", list.files("www", pattern = "^il-.*\\.png$"))
+ART_SRC <- setNames(vapply(paste0("il-", ART_FILES, ".png"), asset_src, ""), ART_FILES)
 art <- function(name, w, h = w, fallback = name, cls = "") {
-  if (name %in% ART_FILES) tags$img(src = paste0("il-", name, ".png"), class = trimws(paste("art", cls)),
+  if (name %in% ART_FILES) tags$img(src = ART_SRC[[name]], class = trimws(paste("art", cls)),
                                      width = w, height = h, alt = "")
   else li(fallback, min(w, h), cls)
 }
@@ -107,7 +111,7 @@ HERO_SVG <- HTML('
     <circle cx="140" cy="27" r="1.7" fill="#2F4A42" stroke="none"/>
   </g>
 </svg>')
-HERO_ART <- if (!is.na(HERO_FILE)) tags$img(src = HERO_FILE, class = "hero-art hero-img", alt = "") else HERO_SVG
+HERO_ART <- if (!is.na(HERO_FILE)) tags$img(src = asset_src(HERO_FILE), class = "hero-art hero-img", alt = "") else HERO_SVG
 
 # ---- 숫자 표시 도우미 ---------------------------------------------------
 num  <- function(x, d = 0) formatC(round(x, d), big.mark = ",", format = "f", digits = d)
