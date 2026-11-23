@@ -120,7 +120,8 @@ won  <- function(x) paste0(num(x), "원")
 pct  <- function(x, d = 1) paste0(num(x, d), "%")
 sgn  <- function(x, d = 0) paste0(ifelse(round(x, d) > 0, "+", ""), num(x, d))
 status_chip <- function(s) {
-  cls <- switch(s, "확인 완료" = "ok", "확인 필요" = "check", "가상" = "virtual", "-" = "none", "fake")
+  cls <- switch(s, "확인 완료" = "ok", "확인 필요" = "check", "가상" = "virtual", "임시 값" = "fake",
+                "-" = "none", "fake")
   as.character(tags$span(class = paste("chip", cls), s))
 }
 chipify <- function(df) {
@@ -151,7 +152,7 @@ hero <- function(tag, title, sub = NULL)
       HERO_ART)
 
 page_foot <- function() div(class = "page-foot",
-  span("LESE412 기말 프로젝트 · 자료: 낙농진흥회 낙농통계광장 (원유생산통계·원유수취가격, 2013-2025, 2026-11-19 조회) · 기준연도 2013"),
+  span("LESE412 기말 프로젝트 · 자료: 낙농진흥회 낙농통계광장(원유생산통계·원유수취가격, 2013-2025, 2026-11-19 조회) · 기준연도 2013년"),
   span(class = "foot-pill", "방법론 검증: 강의 L11 공식 대조 완료"))
 
 side_info_card <- function() div(class = "side-info",
@@ -172,7 +173,7 @@ controls_ui <- function() tagList(
   div(class = "side-field",
       div(class = "price-row",
           span(class = "price-icon", art("milk", 56)),
-          div(lab_tip("원유 지지가격", "연동제로 정해지는 원유 1L 가격 Ps. 도입 전 균형가격 P*(980.29원)보다 높으면 가격하한으로 작동합니다."),
+          div(lab_tip("연동제 가격", "연동제로 정해지는 원유 1L 가격 Ps(지지가격)입니다. 도입 전 균형가격 P*(980.29원)보다 높으면 가격하한으로 작동합니다."),
               uiOutput("price_big"))),
       div(class = "price-slider",
           sliderInput("policy_price", NULL, min = 980, max = 1300, value = BASE$policy_default,
@@ -186,7 +187,7 @@ controls_ui <- function() tagList(
     accordion_panel(
       "탄력성 직접 조정",
       div(class = "derived", uiOutput("eta_farm_txt")),
-      p(class = "foot mb-2", "원유 수요탄력성은 소매 탄력성, Sa, σ로 계산합니다 (Muth)."),
+      p(class = "foot mb-2", "원유 수요탄력성은 소매 탄력성, Sa, σ로 계산합니다(Muth)."),
       sliderInput("eta_r", "흰 우유 소매 수요탄력성 η", min = -1.5, max = -0.05, value = ELAST_PRESET$SR$eta_r, step = 0.05, ticks = FALSE),
       sliderInput("eps_s", "원유 공급탄력성 ε", min = 0.05, max = 2, value = ELAST_PRESET$SR$eps_s, step = 0.05, ticks = FALSE),
       sliderInput("Sa", "소매가 중 원유 몫 Sa", min = 0.2, max = 0.8, value = ELAST_DEFAULT$Sa, step = 0.01, ticks = FALSE),
@@ -199,7 +200,7 @@ controls_ui <- function() tagList(
                                            selected = SURPLUS_DEFAULT$payer)),
       sliderInput("Pv", "잉여 원유 처분가치 Pv (원/L)", min = 0, max = 900,
                   value = SURPLUS_DEFAULT$Pv, step = 10, ticks = FALSE),
-      div(class = "slider-note", "0 = 회수 가치 없음 (강의 모형)")
+      div(class = "slider-note", "0 = 회수 가치 없음(강의 모형)")
     )
   ),
   actionButton("bookmark", "설정 링크 복사", icon = icon("link"), class = "btn-primary btn-main w-100"),
@@ -216,7 +217,7 @@ side_info_ui <- tagList(
       p("농림축산식품부 낙농 정책 담당 분석가")),
   div(class = "side-block",
       div(class = "sb-title", "분석 질문"),
-      p("연동제로 원유 수매가가 오르면 낙농가 소득 보전(ΔPS)에 비해 유가공업체·소비자의 손실과 잉여 원유 처리 비용은 얼마이며, 저소득층과 고소득층 가계의 실질 부담은 단기와 장기에 어느 수준인가?")),
+      p("연동제로 원유가격이 오르면 낙농가 소득 보전(ΔPS)에 비해 유가공업체·소비자의 손실과 잉여 원유 처리 비용은 단기와 장기에 각각 얼마이며, 저소득층과 고소득층 가계의 실질 부담은 어느 수준인가?")),
   div(class = "side-block",
       div(class = "sb-title", "분석 시장과 기준연도"),
       p("농가 출하 단계의 원유 시장(원/L, 천 톤), 2013년. 연동제가 처음 적용되어 도입 전(1-7월)과 도입 후(8-12월) 가격을 모두 관측할 수 있습니다.")),
@@ -253,7 +254,7 @@ sim_ui <- tagList(
           div(class = "mkt", tableOutput("market_tbl")),
           div(class = "mint-bar", "기준 = 2013년 도입 전 P*·생산량 · 괄호는 변화율"))
   ),
-  xcard("사용한 탄력성", status = "출처 입력 전", kind = "red",
+  xcard("사용한 탄력성", status = "임시 값 · 출처 입력 전", kind = "red",
         div(class = "tbl-wrap", tableOutput("elast_tbl")),
         uiOutput("elast_now")),
   accordion(
@@ -285,7 +286,7 @@ welfare_ui <- tagList(
   ),
   xcard("가정에 따른 민감도", status = "순후생 변화 ΔW", kind = "mint",
         uiOutput("sens_tbl"),
-        p(class = "foot", "공급탄력성 낮음·기준·높음 = ε 0.2·0.5·1.0, 인상폭은 도입 전 P* 대비. 수요탄력성과 잉여 처리 설정은 현재값. 진한 테두리는 현재 설정과 가장 가까운 칸.")),
+        p(class = "foot", "공급탄력성 낮음·기준·높음은 ε 0.2·0.5·1.0이고, 인상폭은 도입 전 P* 대비입니다. 수요탄력성과 잉여 원유 처리 설정은 현재 선택값을 적용했습니다. 진한 테두리는 현재 설정과 가장 가까운 칸입니다.")),
   page_foot()
 )
 
@@ -300,7 +301,7 @@ market_ui <- tagList(
                 span(class = "policy-icon", bs_icon(x$bs)),
                 div(div(class = "policy-title", x$title), div(class = "policy-body", x$body))))),
           source_line(POLICY_SOURCE)),
-    xcard("원유 시장 구조와 가치사슬", status = "가짜 값 포함", kind = "red",
+    xcard("원유 시장 구조와 가치사슬", status = "임시 값 포함", kind = "red",
           div(class = "chain", lapply(seq_len(nrow(VALUE_CHAIN)), function(i)
             div(class = paste("chain-step", VALUE_CHAIN$scope[i]),
                 div(class = "chain-icon", art(VALUE_CHAIN$art[i], 112, 84, fallback = VALUE_CHAIN$li[i])),
@@ -313,7 +314,7 @@ market_ui <- tagList(
     col_widths = c(6, 6),
     xcard("2013년 월별 원유수취가격", status = "확인 완료", kind = "green",
           plotOutput("m2013_plot", height = 280),
-          source_line("낙농진흥회 원유수취가격 (전국, 원/L), 2013년 · 점선은 모형의 P*와 정책가격")),
+          source_line("낙농진흥회 원유수취가격(전국, 원/L), 2013년 · 점선은 모형의 P*와 연동제 가격")),
     navset_card_underline(
       title = span(class = "ch-title", "원유가격과 생산량 추이"),
       nav_panel("그래프", plotOutput("trend_plot", height = 280)),
@@ -321,7 +322,7 @@ market_ui <- tagList(
       footer = source_line("낙농진흥회 원유수취가격 연평균(원/L)·원유생산량(천 톤), 2013-2025 · 확인 완료")
     )
   ),
-  xcard("2013년 기준선", status = "일부 가짜 값", kind = "red",
+  xcard("2013년 기준선", status = "일부 임시 값", kind = "red",
         div(class = "tbl-wrap", tableOutput("baseline_tbl")),
         div(class = "mint-bar", "상태가 '확인 완료'인 값만 결론에 사용합니다")),
   page_foot()
@@ -335,20 +336,20 @@ method_ui <- tagList(
     col_widths = c(7, 5),
     xcard("수식", status = "강의 슬라이드 대조", kind = "grey",
           div(class = "eq",
-              h6("1. 선형 수요·공급 (2013년 기준점에서 보정)"),
+              h6("1. 선형 수요·공급(2013년 기준점에서 보정)"),
               p("$$Q^d = a - bP,\\quad Q^s = c + dP,\\quad b = |\\eta_a|\\,\\frac{Q^*}{P^*},\\quad d = \\varepsilon\\,\\frac{Q^*}{P^*}$$"),
-              h6("2. 원유 수요탄력성 (유업체의 파생수요, Muth)"),
+              h6("2. 원유 수요탄력성(유업체의 파생수요, Muth)"),
               p("$$\\eta_a = S_a\\,\\eta - S_b\\,\\sigma,\\quad S_b = 1 - S_a$$"),
-              h6("3. 연동제 가격 = 가격하한 (wedge)"),
+              h6("3. 연동제 가격 = 가격하한(wedge: 가격은 Ps 하나, 공급량과 수요량 사이의 수량 쐐기)"),
               p("$$P_s > P^* \\Rightarrow \\text{잉여} = Q^s(P_s) - Q^d(P_s)$$"),
-              h6("4. 후생 (수급 그래프의 면적 A, B, D)"),
+              h6("4. 후생(수급 그래프의 면적 A, B, D)"),
               p("$$\\Delta CS = -A = -(P_s - P^*)\\,\\frac{Q^* + Q^d}{2}$$"),
               p("$$\\Delta PS = A + B = (P_s - P^*)\\,\\frac{Q^* + Q^s}{2}$$"),
               p("$$G = (P_s - P_v)(Q^s - Q^d) = B + D$$"),
               p("$$DWL = D = (Q^s - Q^d)\\left[\\frac{P_s + P^*}{2} - P_v\\right] = -\\Delta W$$"),
               p("$$\\text{이전효율} = \\frac{\\Delta PS}{G - \\Delta CS}$$"),
-              h6("5. 가계 파급 (원유가 → 소매가 전가)"),
-              p("$$\\%\\Delta P_{retail} \\approx S_a \\times \\%\\Delta P_{farm}$$"))),
+              h6("5. 가계 파급(원유가 → 소매가 전가)"),
+              p("$$\\%\\Delta P_{\\text{retail}} \\approx S_a \\times \\%\\Delta P_{\\text{farm}}$$"))),
     xcard("가정", tags$ul(class = "assume", lapply(ASSUMPTIONS, tags$li)))
   ),
   layout_columns(
@@ -422,12 +423,13 @@ plot_sd <- function(r) {
     geom_polygon(data = areas, aes(x, y, fill = area), alpha = 0.55, color = NA) +
     geom_line(data = lines, aes(Q, P, color = curve), linewidth = 1.2) +
     geom_hline(yintercept = r$P0, linetype = "dotted", color = COL$muted) +
-    geom_hline(yintercept = r$Ps, linetype = "dashed", color = COL$g800) +
+    # 연동제 가격이 P* 이하면(효력 없음) 가격선과 라벨을 그리지 않아 P* 라벨과 겹치지 않게 한다
+    (if (r$binding) geom_hline(yintercept = r$Ps, linetype = "dashed", color = COL$g800)) +
     geom_point(aes(x = c(r$Qd, r$Qs, r$Q0), y = c(r$Ps, r$Ps, r$P0)), size = 2.6, color = COL$ink) +
-    annotate("label", x = r$Q0 * 1.38, y = r$Ps, label = paste0("정책가격 ", num(r$Ps)),
+    (if (r$binding) annotate("label", x = r$Q0 * 1.38, y = r$Ps, label = paste0("연동제 가격 ", num(r$Ps)),
              hjust = 1, vjust = -0.3, size = 3.4, family = PLOT_FONT, linewidth = 0, fill = "white",
-             color = COL$g800) +
-    annotate("label", x = r$Q0 * 1.38, y = r$P0, label = paste0("도입 전 P* ", num(r$P0)),
+             color = COL$g800)) +
+    annotate("label", x = r$Q0 * 1.38, y = r$P0, label = paste0("도입 전 P* ", num(r$P0, 2)),
              hjust = 1, vjust = 1.3, size = 3.4, family = PLOT_FONT, linewidth = 0, fill = "white",
              color = COL$muted) +
     scale_color_manual(values = c("원유 수요 (유업체)" = COL$g900, "원유 공급 (낙농가)" = COL$brown)) +
@@ -450,7 +452,7 @@ server <- function(input, output, session) {
     updateQueryString(url)
     showModal(modalDialog(
       title = "이 설정 링크",
-      p("아래 링크를 열면 지금의 시나리오, 지지가격, 탄력성, 잉여 처리 설정, 탭이 그대로 재현됩니다. 발표 Q&A용으로 미리 저장해 두세요."),
+      p("아래 링크를 열면 지금의 시나리오, 연동제 가격, 탄력성, 잉여 원유 처리 설정, 탭이 그대로 재현됩니다. 발표 Q&A용으로 미리 저장해 두세요."),
       tags$textarea(id = "bm_url", class = "form-control", rows = 3, readonly = NA, url),
       footer = tagList(
         tags$button(type = "button", class = "btn btn-primary",
@@ -521,17 +523,17 @@ server <- function(input, output, session) {
   output$hero_q <- renderUI({
     r <- res()
     HTML(paste0("원유가격을 리터당 <span class='hl'>", num(r$Ps), "원</span>으로 정하면,<br>",
-                if (input$run == "SR") "1년 안에" else "생산 조정 뒤에", " 누가 얼마나 부담할까요?"))
+                if (input$run == "SR") "1년 안에" else "장기 생산 조정 후에", " 누가 얼마나 부담할까요?"))
   })
   output$hero_sub <- renderUI({
     r <- res()
     if (!r$binding) "도입 전 균형가격 이하 · 가격하한 효력 없음"
-    else paste0("도입 전 P* 대비 +", num(r$dp), "원 (+", num(r$farm_pct, 1), "%) · 2013년 원유 1년 물량 기준")
+    else paste0("도입 전 P* 대비 +", num(r$dp), "원(+", num(r$farm_pct, 1), "%) · 2013년 연간 원유 생산량 기준")
   })
 
   output$vb_ps  <- renderText(eok(res()$dPS))
   output$vb_cs  <- renderText(eok(res()$dCS))
-  output$vb_g   <- renderText(eok(-res()$G))
+  output$vb_g   <- renderText(paste0(num(res()$G), "억 원"))   # 비용 카드는 양수(후생 막대는 −G)
   output$vb_dwl <- renderText(paste0(num(res()$DWL), "억 원"))
 
   observe({
@@ -549,7 +551,7 @@ server <- function(input, output, session) {
 
   output$story <- renderUI({
     r <- res(); h <- r$household
-    if (!r$binding) return(HTML("연동제 가격이 도입 전 균형가격 P* 이하라 가격하한이 효력을 갖지 않습니다. 시장은 P*·Q*에서 거래되고 후생 변화는 없습니다."))
+    if (!r$binding) return(HTML("연동제 가격이 도입 전 균형가격 P* 이하이므로 가격하한이 효력을 갖지 않습니다. 시장은 P*·Q*에서 거래되고 후생 변화는 없습니다."))
     tagList(
       HTML(paste0(
         "유업체는 원유를 리터당 <b>", won(r$dp), "</b> 더 주고 사며, 구매량은 <b>", num(r$Qd),
@@ -562,9 +564,9 @@ server <- function(input, output, session) {
 
   output$sd_title <- renderUI({
     r <- res()
-    if (!r$binding) "연동제 가격이 P* 이하라 가격하한 효력이 없다"
-    else paste0("원유 ", num(r$Ps), "원/L에서 낙농가 생산 ", num(r$Qs), "천 톤이 유업체 구매 ",
-                num(r$Qd), "천 톤을 넘어 ", num(r$stock), "천 톤이 남는다")
+    if (!r$binding) "연동제 가격이 P* 이하이므로 가격하한 효력이 없습니다"
+    else paste0("원유 ", num(r$Ps), "원/L에서 낙농가 생산량 ", num(r$Qs), "천 톤이 유업체 구매량 ",
+                num(r$Qd), "천 톤을 초과해 ", num(r$stock), "천 톤의 잉여가 발생합니다")
   })
   output$sd_source <- renderUI({
     source_line("기준선: 2013년 낙농진흥회 (P* 980.29원/L, Q* 2,093천 톤) · ΔCS = −A, ΔPS = A + B, G = B + D")
@@ -587,9 +589,9 @@ server <- function(input, output, session) {
   output$elast_tbl <- renderTable(chipify(ELAST_TBL), sanitize.text.function = identity,
                                   hover = TRUE, width = "100%")
   output$elast_now <- renderUI({
-    p(class = "foot", HTML(paste0("현재 설정: η ", num(input$eta_r, 2), " · ε ", num(input$eps_s, 2),
-                                  " · Sa ", num(input$Sa, 2), " · σ ", num(input$sigma, 2),
-                                  " → 원유 수요탄력성 η<sub>a</sub> ", num(inp()$eta_farm, 2))))
+    p(class = "foot", HTML(paste0("현재 설정: η = ", num(input$eta_r, 2), " · ε = ", num(input$eps_s, 2),
+                                  " · Sa = ", num(input$Sa, 2), " · σ = ", num(input$sigma, 2),
+                                  " → 원유 수요탄력성 η<sub>a</sub> = ", num(inp()$eta_farm, 2))))
   })
 
   # ---- 후생 결과 ----
@@ -625,7 +627,8 @@ server <- function(input, output, session) {
         row("scale", "순후생 변화", "ΔCS + ΔPS − G", eok(r$dW), w$dW),
         row("coins", "사중손실", "누구에게도 가지 않는 몫", paste0(num(r$DWL), "억 원"), w$DWL),
         row("cycle", "이전효율",
-            if (is.na(r$TE) || r$TE <= 0) "낙농가 1원당 비용 -" else paste0("낙농가 1원당 비용 ", num(1 / r$TE, 2), "원"),
+            if (is.na(r$TE) || r$TE <= 0) "낙농가 1원 이전에 유업체·정부가 치르는 비용 -"
+            else paste0("낙농가 1원 이전에 유업체·정부가 치르는 비용 ", num(1 / r$TE, 2), "원"),
             if (is.na(r$TE)) "-" else num(r$TE, 2), w$TE))
   })
 
@@ -652,8 +655,8 @@ server <- function(input, output, session) {
     q13 <- TREND$qty[TREND$year == 2013]; q14 <- TREND$qty[TREND$year == 2014]
     sr <- run_preset("SR", BASE$P_policy)$Qs; lr <- run_preset("LR", BASE$P_policy)$Qs
     f <- function(q) paste0(sgn((q / q13 - 1) * 100, 1), "%")
-    div(class = "mint-bar", HTML(paste0("실제 2014년 원유 생산 <b>", f(q14), "</b> · 모형 단기 ", f(sr),
-                                        " · 장기 ", f(lr), " (2013년 실제 연동제 가격 기준)")))
+    div(class = "mint-bar", HTML(paste0("실제 2014년 원유 생산량 변화 <b>", f(q14), "</b> · 모형 단기 ", f(sr),
+                                        " · 장기 ", f(lr), "(2013년 실제 연동제 가격 기준)")))
   })
 
   output$hh_rows <- renderUI({
@@ -672,8 +675,9 @@ server <- function(input, output, session) {
     ratio <- if (burden[2] > 0) burden[1] / burden[2] else NA
     tagList(div(class = "hrows", rows),
             div(class = "mint-bar", HTML(paste0(
-              "소매가격 전가 가정 (+", num(r$retail_pct, 1), "%) · 실질 부담은 저소득층이 ",
-              if (is.na(ratio)) "-" else paste0("<b>", num(ratio, 1), "배</b>"), " · 가계자료 확인 필요"))))
+              "소매가격 전가 가정(+", num(r$retail_pct, 1), "%) · 소비지출 대비 실질 부담률은 저소득층이 고소득층의 ",
+              if (is.na(ratio)) "-" else paste0("<b>", num(ratio, 1), "배</b>"),
+              " · 전가율로만 계산해 단기·장기가 같음 · 가계자료 확인 필요"))))
   })
 
   output$sens_tbl <- renderUI({
@@ -713,9 +717,9 @@ server <- function(input, output, session) {
       geom_point(aes(color = 기간), size = 2.8) +
       annotate("text", x = 3, y = BASE$P0 - 20, label = paste0("P* ", num(BASE$P0, 2), "원 (1-7월 평균)"),
                family = PLOT_FONT, size = 3.3, color = COL$muted) +
-      annotate("text", x = 10.1, y = 1000, label = paste0("정책가격 ", num(BASE$P_policy, 2), "원\n(8-12월 평균)"),
+      annotate("text", x = 10.1, y = 1000, label = paste0("연동제 가격 ", num(BASE$P_policy, 2), "원\n(8-12월 평균)"),
                family = PLOT_FONT, size = 3.3, color = COL$g800) +
-      annotate("text", x = 7.5, y = 1075, label = "8월 연동제 적용\n+96.45원",
+      annotate("text", x = 7.5, y = 1075, label = "8월 연동제 적용\n전월 대비 +96.45원/L",
                family = PLOT_FONT, size = 3.1, color = COL$r600, hjust = 1.05) +
       scale_color_manual(values = c("도입 전 (1-7월)" = COL$c400, "도입 후 (8-12월)" = COL$g800)) +
       scale_x_continuous(NULL, breaks = 1:12, labels = paste0(1:12, "월")) +
