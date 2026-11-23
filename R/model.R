@@ -151,13 +151,19 @@ identity_check <- function(r, tol = 0.5) {
 
 # ---- 교과서형 예제 검증: 손으로 계산한 기대값과 simulate() 결과 비교 --------
 run_validation <- function(case) {
-  r <- simulate(list(policy_price = case$Ps, P0 = case$P0, Q0 = case$Q0,
-                     eta_farm = case$eta, eps_s = case$eps, Pv = case$Pv,
+  sim <- function(Pv) simulate(list(policy_price = case$Ps, P0 = case$P0, Q0 = case$Q0,
+                     eta_farm = case$eta, eps_s = case$eps, Pv = Pv,
                      Sa = 1, Pr0 = 0, unit = 1,
                      household = data.frame(group = "-", budget_share = 0, monthly_exp = 0)))
-  got <- c(r$Qd, r$Qs, r$stock, r$dCS, r$dPS, r$G, r$DWL)
-  exp <- unlist(case$expected[c("Qd", "Qs", "stock", "dCS", "dPS", "G", "DWL")])
-  data.frame(항목 = c("유업체 구매량 Qd", "낙농가 생산량 Qs", "잉여 매입량", "ΔCS", "ΔPS", "정부 비용 G", "DWL"),
+  r <- sim(case$Pv); rv <- sim(case$Pv_resale)
+  got <- c(r$Qd, r$Qs, r$stock, r$A, r$B, r$dCS, r$dPS, r$G, r$DWL, rv$G, rv$DWL)
+  keys <- c("Qd", "Qs", "stock", "A", "B", "dCS", "dPS", "G", "DWL", "G_resale", "DWL_resale")
+  exp <- unlist(case$expected[keys])
+  data.frame(항목 = c("유업체 구매량 Qd", "낙농가 생산량 Qs", "잉여 매입량 Qs − Qd",
+                      "a + b (소비자 → 생산자)", "c (새 생산자 이득)",
+                      "ΔCS = −(a + b)", "ΔPS = a + b + c", "G = b + c + d + e",
+                      "DWL = b + d + e", paste0("재판매 v = ", case$Pv_resale, ": G"),
+                      paste0("재판매 v = ", case$Pv_resale, ": DWL")),
              기대값 = exp, 앱 = round(got, 4), 일치 = ifelse(abs(got - exp) < 1e-6, "✓", "✗"),
              check.names = FALSE)
 }

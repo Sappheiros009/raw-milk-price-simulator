@@ -153,7 +153,7 @@ hero <- function(tag, title, sub = NULL)
 
 page_foot <- function() div(class = "page-foot",
   span("LESE412 기말 프로젝트 · 자료: 낙농진흥회 낙농통계광장(원유생산통계·원유수취가격, 2013-2025, 2026-11-19 조회) · 기준연도 2013년"),
-  span(class = "foot-pill", "방법론 검증: 교과서 예제 통과 · 강의 예제 대기"))
+  span(class = "foot-pill", "방법론 검증: 강의 L11 공식 대조 완료"))
 
 side_info_card <- function() div(class = "side-info",
   span(class = "si-icon", art("milk", 40)),
@@ -354,10 +354,10 @@ method_ui <- tagList(
   ),
   layout_columns(
     col_widths = c(6, 6),
-    xcard("모형 검증", status = "교과서 예제 통과", kind = "green",
+    xcard("모형 검증", status = "강의 공식 대조 완료", kind = "green",
           p(class = "card-lead", VALIDATION_CASE$label),
           tableOutput("valid_tbl"),
-          div(class = "mint-bar", "강의 슬라이드 예제를 받으면 R/data.R의 VALIDATION_CASE를 교체해 다시 확인합니다")),
+          div(class = "mint-bar", "L11 Supply Policy 6쪽: ΔCS = −(a+b), ΔPS = a+b+c, G = b+c+d+e, Net = −(b+d+e), 재판매 시 G = (Ps − v)(Qs − Qd)")),
     xcard("자료 출처", status = "일부 확인 필요", kind = "grey",
           tableOutput("source_tbl"),
           source_line("낙농진흥회 낙농통계광장: dairy.or.kr › 낙농통계광장 › 국내통계"))
