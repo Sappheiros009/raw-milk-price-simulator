@@ -301,7 +301,7 @@ market_ui <- tagList(
                 span(class = "policy-icon", bs_icon(x$bs)),
                 div(div(class = "policy-title", x$title), div(class = "policy-body", x$body))))),
           source_line(POLICY_SOURCE)),
-    xcard("원유 시장 구조와 가치사슬", status = "임시 값 포함", kind = "red",
+    xcard("원유 시장 구조와 가치사슬", status = "일부 확인 필요", kind = "grey",
           div(class = "chain", lapply(seq_len(nrow(VALUE_CHAIN)), function(i)
             div(class = paste("chain-step", VALUE_CHAIN$scope[i]),
                 div(class = "chain-icon", art(VALUE_CHAIN$art[i], 112, 84, fallback = VALUE_CHAIN$li[i])),
@@ -322,7 +322,7 @@ market_ui <- tagList(
       footer = source_line("낙농진흥회 원유수취가격 연평균(원/L)·원유생산량(천 톤), 2013-2025 · 확인 완료")
     )
   ),
-  xcard("2013년 기준선", status = "일부 임시 값", kind = "red",
+  xcard("2013년 기준선", status = "일부 입력 필요", kind = "grey",
         div(class = "tbl-wrap", tableOutput("baseline_tbl")),
         div(class = "mint-bar", "상태가 '확인 완료'인 값만 결론에 사용합니다")),
   page_foot()
@@ -349,7 +349,8 @@ method_ui <- tagList(
               p("$$DWL = D = (Q^s - Q^d)\\left[\\frac{P_s + P^*}{2} - P_v\\right] = -\\Delta W$$"),
               p("$$\\text{이전효율} = \\frac{\\Delta PS}{G - \\Delta CS}$$"),
               h6("5. 가계 파급(원유가 → 소매가 전가)"),
-              p("$$\\%\\Delta P_{\\text{retail}} \\approx S_a \\times \\%\\Delta P_{\\text{farm}}$$"))),
+              p("$$\\%\\Delta P_{\\text{retail}} \\approx S_a \\times \\%\\Delta P_{\\text{farm}}$$"),
+              p("$$\\text{가계 부담률} \\approx \\text{우유 지출 비중} \\times \\%\\Delta P_{\\text{retail}}$$"))),
     xcard("가정", tags$ul(class = "assume", lapply(ASSUMPTIONS, tags$li)))
   ),
   layout_columns(
@@ -500,7 +501,7 @@ server <- function(input, output, session) {
          eta_farm = derived_eta(eta_r, Sa, sigma), eps_s = eps_s, Sa = Sa,
          Pv = if (is.null(input$Pv)) SURPLUS_DEFAULT$Pv else input$Pv,
          payer = if (is.null(input$payer)) SURPLUS_DEFAULT$payer else input$payer,
-         Pr0 = BASE$Pr0, household = HOUSEHOLD)
+         household = HOUSEHOLD)
   }
   run_preset <- function(run, price = input$policy_price) {
     p <- ELAST_PRESET[[run]]
@@ -556,8 +557,8 @@ server <- function(input, output, session) {
       HTML(paste0(
         "유업체는 원유를 리터당 <b>", won(r$dp), "</b> 더 주고 사며, 구매량은 <b>", num(r$Qd),
         "천 톤</b>으로 줄고 남는 원유 <b>", num(r$stock), "천 톤</b>은 분유로 전환됩니다. ",
-        "이 부담이 소매가로 전가되면 흰 우유가 리터당 약 <b>", won(r$retail_won), "</b> 오르고, ",
-        h$group[1], " 가구는 한 달에 약 <b>", won(h$monthly_won[1]), "</b>을 더 냅니다. ")),
+        "이 부담이 소매가로 전가되면 흰 우유 소매가가 약 <b>", sgn(r$retail_pct, 1), "%</b> 오르고, ",
+        h$group[1], " 가구의 소비지출 대비 부담은 약 <b>", pct(h$income_pct[1], 3), "</b> 늘어납니다. ")),
       check_badge(chk())
     )
   })
@@ -575,14 +576,15 @@ server <- function(input, output, session) {
 
   output$market_tbl <- renderTable({
     r <- res()
-    base  <- c(r$P0, r$P0, r$Q0, r$Q0, 0, BASE$Pr0)
-    after <- c(r$Ps, r$Pd, r$Qs, r$Qd, r$stock, BASE$Pr0 + r$retail_won)
+    base  <- c(r$P0, r$P0, r$Q0, r$Q0, 0)
+    after <- c(r$Ps, r$Pd, r$Qs, r$Qd, r$stock)
     chg   <- after - base
     rate  <- ifelse(base > 0, paste0(" (", sgn(chg / base * 100, 1), "%)"), "")
     data.frame(
       항목 = c("낙농가 수취가격 (원/L)", "유업체 구매가격 (원/L)", "원유 생산량 (천 톤)",
-               "유업체 구매량 (천 톤)", "잉여 원유·분유 전환 (천 톤)", "참고: 흰 우유 소매가 (원/L)"),
-      기준 = num(base), `정책 후` = num(after), 변화 = paste0(sgn(chg), rate),
+               "유업체 구매량 (천 톤)", "잉여 원유·분유 전환 (천 톤)", "흰 우유 소매가 변화율 (≈ Sa × 원유가 변화율)"),
+      기준 = c(num(base), "-"), `정책 후` = c(num(after), "-"),
+      변화 = c(paste0(sgn(chg), rate), paste0(sgn(r$retail_pct, 1), "%")),
       check.names = FALSE)
   }, hover = TRUE, width = "100%", align = "lrrr")
 
@@ -669,9 +671,9 @@ server <- function(input, output, session) {
           span(class = "hrow-icon", art("house", 44)),
           div(div(class = "hrow-name", lab[i]), div(class = "hrow-sub", h$group[i])),
           span(class = "vsep"),
-          div(class = "hrow-val", paste0("월 ", won(h$monthly_won[i]))),
+          div(class = "hrow-val", paste0("+", pct(burden[i], 3))),
           div(div(class = "hbar", div(style = sprintf("width:%.0f%%", burden[i] / mx * 100))),
-              div(class = "hbar-cap", paste0("소비지출 대비 ", pct(burden[i], 3))))))
+              div(class = "hbar-cap", paste0("소비지출 대비 부담 · 우유 지출 비중 ", pct(h$budget_share[i] * 100, 1))))))
     ratio <- if (burden[2] > 0) burden[1] / burden[2] else NA
     tagList(div(class = "hrows", rows),
             div(class = "mint-bar", HTML(paste0(

@@ -53,8 +53,7 @@ welfare_polygons <- function(P0, Q0, Ps, Qd, Qs, Pv) {
 #   Pv            잉여 원유 처분가치 (원/L, 원유 환산)
 #   payer         잉여 처리 비용 부담: "gov" 정부 / "proc" 유업체 의무 매입
 #   Sa            소매가 중 원유 몫
-#   Pr0           흰 우유 소매가격 (원/L)
-#   household     data.frame(group, budget_share, monthly_exp)
+#   household     data.frame(group, budget_share)
 #   unit          금액 나눗수 (기본 100 → 억 원). 검증 예제는 1.
 # =====================================================================
 simulate <- function(inp) {
@@ -93,10 +92,8 @@ simulate <- function(inp) {
   # ---- 소매·가계 파급 (Muth: 소매가 변화율 ≈ Sa × 농가가 변화율) ----
   farm_pct   <- dp / P0 * 100
   retail_pct <- inp$Sa * farm_pct
-  retail_won <- inp$Pr0 * retail_pct / 100
   hh <- inp$household
   hh$pct <- retail_pct
-  hh$monthly_won <- hh$monthly_exp * hh$budget_share * retail_pct / 100
   hh$income_pct  <- hh$budget_share * retail_pct          # 소비지출 대비 실질부담 (%)
 
   list(
@@ -106,7 +103,7 @@ simulate <- function(inp) {
     dCS = dCS, dPS = dPS, G = G, G_gross = G_gross, salvage = salvage,
     dW = dW, DWL = DWL, TE = TE,
     gov_cost = gov_cost, proc_loss = proc_loss, P_proc_eff = P_proc_eff,
-    farm_pct = farm_pct, retail_pct = retail_pct, retail_won = retail_won,
+    farm_pct = farm_pct, retail_pct = retail_pct,
     household = hh, eta_farm = inp$eta_farm, eps_s = inp$eps_s,
     curves = k, unit = unit,
     areas = welfare_polygons(P0, Q0, Ps, Qd, Qs, Pv)
@@ -153,8 +150,8 @@ identity_check <- function(r, tol = 0.5) {
 run_validation <- function(case) {
   sim <- function(Pv) simulate(list(policy_price = case$Ps, P0 = case$P0, Q0 = case$Q0,
                      eta_farm = case$eta, eps_s = case$eps, Pv = Pv,
-                     Sa = 1, Pr0 = 0, unit = 1,
-                     household = data.frame(group = "-", budget_share = 0, monthly_exp = 0)))
+                     Sa = 1, unit = 1,
+                     household = data.frame(group = "-", budget_share = 0)))
   r <- sim(case$Pv); rv <- sim(case$Pv_resale)
   got <- c(r$Qd, r$Qs, r$stock, r$A, r$B, r$dCS, r$dPS, r$G, r$DWL, rv$G, rv$DWL)
   keys <- c("Qd", "Qs", "stock", "A", "B", "dCS", "dPS", "G", "DWL", "G_resale", "DWL_resale")
