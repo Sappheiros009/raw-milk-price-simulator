@@ -31,6 +31,12 @@
   --r-sm: 8px; --r-md: 12px; --r-pill: 999px;
   /* 포커스 */
   --focus: 0 0 0 3px rgba(63, 140, 110, 0.35);
+  /* 움직임: 빠르게 시작해 부드럽게 멈추는 곡선 하나와 시간 3단계 */
+  --ease: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --t-1: 120ms; --t-2: 200ms; --t-3: 320ms;
+  /* 그림자 2단계 */
+  --shadow-1: 0 1px 2px rgba(16, 40, 32, 0.06), 0 2px 6px rgba(16, 40, 32, 0.05);
+  --shadow-2: 0 6px 18px rgba(16, 40, 32, 0.12);
 }
 
 /* 한글은 단어 중간에서 줄을 바꾸지 않는다 (예: '후생 변/화' 방지) */
@@ -92,7 +98,8 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 .navbar .navbar-collapse, .navbar .navbar-nav { flex-wrap: nowrap; }
 .navbar .nav-item:not(:has(> .nav-link[data-value])) { align-items: center; }
 @media (max-width: 1400px) { .nav-note { display: none; } }
-.bslib-page-navbar > .navbar { position: relative; }
+/* 상단 바를 화면 위에 고정해, 아래로 내려가도 메뉴를 바로 쓸 수 있게 한다 */
+.bslib-page-navbar > .navbar { position: sticky; top: 0; z-index: 1040; }
 .nav-mega { position: absolute; left: 0; right: 0; top: 100%; z-index: 1100;
   background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: 0 18px 36px rgba(16, 40, 32, 0.16);
   opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity .15s ease, transform .15s ease, visibility .15s; }
@@ -500,3 +507,101 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 .card-body > .carousel-x + .src-line { margin-top: auto; padding-top: var(--sp-3); }
 .tab-card .card-header { padding-bottom: 0; }
 .tab-card .nav-underline .nav-link { font-size: var(--fs-sm); }
+
+
+/* =====================================================================
+   모션과 마감
+   원칙: 누를 수 있는 것만 반응한다(카드처럼 누를 수 없는 것은 움직이지 않음).
+         움직임은 짧게(0.12~0.32초), 값이 바뀌면 바뀐 것이 보이게 한다.
+   ===================================================================== */
+html { scroll-behavior: smooth; }
+::selection { background: var(--brand-200); color: var(--brand-900); }
+/* 메뉴로 이동했을 때 고정된 상단 바에 가리지 않도록 */
+[id^="sec-"] { scroll-margin-top: 84px; }
+
+/* 상단 탭: 마우스를 올리면 글자가 살짝 커진다 */
+.navbar .nav-link[data-value] .i18n { display: inline-block; transition: transform var(--t-2) var(--ease); transform-origin: left center; }
+.navbar .nav-item:hover > .nav-link[data-value] .i18n,
+.navbar:has(.mega-col[data-tab="sim"]:hover) .nav-item[data-tab="sim"] .i18n,
+.navbar:has(.mega-col[data-tab="welfare"]:hover) .nav-item[data-tab="welfare"] .i18n,
+.navbar:has(.mega-col[data-tab="market"]:hover) .nav-item[data-tab="market"] .i18n,
+.navbar:has(.mega-col[data-tab="method"]:hover) .nav-item[data-tab="method"] .i18n { transform: scale(1.06); }
+.navbar .nav-link { transition: box-shadow var(--t-2) var(--ease), background-color var(--t-2) var(--ease), color var(--t-1); }
+
+/* 펼친 메뉴: 항목이 위에서부터 차례로 나타나고, 마우스를 올린 항목은 오른쪽으로 살짝 밀리며 왼쪽 막대가 생긴다 */
+.nav-mega .nav-drop-item { opacity: 0; transform: translateY(-4px);
+  transition: opacity var(--t-2) var(--ease), transform var(--t-2) var(--ease), background-color var(--t-1), color var(--t-1), box-shadow var(--t-1);
+  transition-delay: calc(var(--i, 0) * 22ms), calc(var(--i, 0) * 22ms), 0s, 0s, 0s; }
+.navbar:has(.navbar-nav .nav-item.has-mega:hover) .nav-mega .nav-drop-item,
+.nav-mega:hover .nav-drop-item, .nav-mega:focus-within .nav-drop-item { opacity: 1; transform: none; }
+.nav-mega .nav-drop-item:hover, .nav-mega .nav-drop-item:focus-visible {
+  transform: translateX(4px) !important; box-shadow: inset 3px 0 0 var(--brand-600); color: var(--brand-900); font-weight: 600; transition-delay: 0s !important; }
+
+/* 버튼류: 마우스를 올리면 떠오르고, 누르면 살짝 눌린다 */
+.btn, .cx-dot, .cx-prev, .cx-next, .seg .radio-inline, .lang-seg .radio-inline, .reset-link, .side-acc .accordion-button {
+  transition: background-color var(--t-1), color var(--t-1), border-color var(--t-1), box-shadow var(--t-2) var(--ease), transform var(--t-1) var(--ease); }
+.btn-main:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 16px rgba(28, 69, 54, 0.28); }
+.btn-soft:hover:not(:disabled) { transform: translateY(-1px); }
+.btn:active:not(:disabled), .cx-dot:active, .cx-prev:active:not(:disabled), .cx-next:active:not(:disabled),
+.seg .radio-inline:active, .lang-seg .radio-inline:active { transform: scale(0.97); }
+.cx-prev:hover:not(:disabled), .cx-next:hover:not(:disabled) { transform: translateY(-1px); box-shadow: var(--shadow-1); }
+.reset-link .bi { transition: transform var(--t-3) var(--ease); }
+.reset-link:hover .bi { transform: rotate(-90deg); }
+
+/* 슬라이더 손잡이: 마우스를 올리거나 끌면 커지고 둘레에 빛띠 */
+.irs--shiny .irs-handle { cursor: grab; transition: transform var(--t-1) var(--ease), box-shadow var(--t-2) var(--ease) !important; }
+.irs--shiny .irs-handle:hover, .irs--shiny .irs-handle.state_hover {
+  transform: scale(1.15); box-shadow: 0 0 0 6px rgba(63, 140, 110, 0.18), 0 1px 3px rgba(0,0,0,0.2) !important; }
+.irs--shiny .irs-handle:active { cursor: grabbing; }
+.irs--shiny .irs-bar { transition: background-color var(--t-1); }
+.param:hover .irs--shiny .irs-bar, .price-slider:hover .irs--shiny .irs-bar { background: var(--brand-800) !important; }
+
+/* 숫자 칸: 슬라이더나 기본값 단추로 값이 바뀌면 잠깐 물든다 */
+@keyframes num-flash { from { background-color: var(--brand-200); } to { background-color: #FFFFFF; } }
+.param-num.flash { animation: num-flash 600ms var(--ease); }
+
+/* 지표 값이 바뀌면 숫자가 굴러가고(app.js), 카드 윗선이 잠깐 굵어진다 */
+@keyframes kpi-pulse { 0% { box-shadow: inset 0 0 0 0 transparent; } 30% { box-shadow: 0 0 0 3px rgba(63, 140, 110, 0.14); } 100% { box-shadow: none; } }
+.kpi-card.updated { animation: kpi-pulse 700ms var(--ease); }
+.kpi-value, .srow-val, .hero-title .hl-gov, .hero-title .hl-dwl { font-variant-numeric: tabular-nums; }
+
+/* 다시 계산하는 동안: 흐려지되 깜빡이지 않게 */
+.recalculating { opacity: 0.55 !important; transition: opacity var(--t-3) var(--ease); }
+
+/* 탭을 바꾸면 내용이 살짝 떠오르며 나타난다 */
+@keyframes rise-in { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: none; } }
+.bslib-page-navbar .tab-content > .tab-pane.active, .tab-card .tab-pane.active { animation: rise-in var(--t-3) var(--ease); }
+
+/* 캐러셀: 보이는 장은 또렷하게, 넘어가는 장은 흐리게 */
+.cx-slide { transition: opacity var(--t-3) var(--ease); }
+
+/* 툴팁: 둥근 모서리와 그림자 */
+.tooltip-inner { border-radius: var(--r-sm); padding: var(--sp-2) var(--sp-3); box-shadow: var(--shadow-2); }
+
+/* 카드와 표: 그림자 아주 약하게, 표 행은 마우스를 올리면 부드럽게 물든다 */
+.card, .kpi-card { box-shadow: var(--shadow-1); }
+.table > tbody > tr > td { transition: background-color var(--t-1); }
+
+/* 사이드바 스크롤바: 얇고 연하게 */
+.bslib-sidebar-layout > .sidebar { scrollbar-width: thin; scrollbar-color: var(--line-strong) transparent; }
+
+/* 언어를 바꿀 때 글자가 바뀌는 순간을 부드럽게 */
+body.lang-swap [data-en] { animation: rise-in var(--t-2) var(--ease); }
+
+/* 시작 화면 */
+#app-loading { position: fixed; inset: 0; z-index: 2000; display: flex; align-items: center; justify-content: center;
+  background: var(--canvas); transition: opacity var(--t-3) var(--ease), visibility var(--t-3); }
+#app-loading.done { opacity: 0; visibility: hidden; }
+.al-box { display: flex; flex-direction: column; align-items: center; gap: var(--sp-2); text-align: center; }
+.al-box img { border-radius: 14px; box-shadow: var(--shadow-2); margin-bottom: var(--sp-2); animation: rise-in var(--t-3) var(--ease); }
+.al-title { font-size: var(--fs-xl); font-weight: 700; color: var(--ink); }
+.al-sub { font-size: var(--fs-sm); color: var(--muted); }
+.al-bar { width: 180px; height: 4px; border-radius: var(--r-pill); background: var(--line); overflow: hidden; margin-top: var(--sp-3); }
+.al-bar > span { display: block; width: 40%; height: 100%; border-radius: inherit; background: var(--brand-600); animation: al-slide 1.1s var(--ease) infinite; }
+@keyframes al-slide { from { transform: translateX(-100%); } to { transform: translateX(260%); } }
+
+/* 움직임 줄이기를 켠 사용자에게는 움직임을 끈다 */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation-duration: 0.01ms !important; animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important; transition-delay: 0s !important; scroll-behavior: auto !important; }
+}

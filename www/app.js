@@ -13,7 +13,9 @@
 
   /* ---- 1) 언어 ---- */
   function applyLang(l) {
+    var changed = (l === 'en' ? 'en' : 'ko') !== lang;
     lang = (l === 'en') ? 'en' : 'ko';
+    if (changed) { document.body.classList.add('lang-swap'); setTimeout(function () { document.body.classList.remove('lang-swap'); }, 260); }
     document.documentElement.lang = lang;
     document.title = TITLE[lang];
     document.querySelectorAll('[data-en]').forEach(function (el) {
@@ -150,7 +152,9 @@
   function decimals(step) { var s = String(step); return s.indexOf('.') < 0 ? 0 : s.length - s.indexOf('.') - 1; }
   function syncNumFromSlider(id, value) {
     document.querySelectorAll('input.param-num[data-for="' + id + '"]').forEach(function (n) {
-      if (document.activeElement !== n) n.value = (+value).toFixed(decimals(n.step || 1));
+      if (document.activeElement === n) return;
+      var v = (+value).toFixed(decimals(n.step || 1));
+      if (n.value !== v) { n.value = v; n.classList.remove('flash'); void n.offsetWidth; n.classList.add('flash'); }
     });
   }
   function bindParams() {
@@ -193,7 +197,66 @@
     applyLang(checked ? checked.value : 'ko');
   });
 
+  /* ---- 7) 값이 바뀌면 숫자가 이전 값에서 새 값으로 굴러간다 ---- */
+  var REDUCED = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function parseNum(t) {
+    var m = String(t).match(/^([\s\S]*?)([+\u2212-]?)(\u20a9?)([\d,]+(?:\.\d+)?)([\s\S]*)$/);
+    if (!m) return null;
+    var n = m[4], d = n.indexOf('.') < 0 ? 0 : n.length - n.indexOf('.') - 1;
+    return { pre: m[1], plus: m[2] === '+', cur: m[3], val: (m[2] === '\u2212' || m[2] === '-' ? -1 : 1) * parseFloat(n.replace(/,/g, '')), d: d, post: m[5] };
+  }
+  function fmtNum(v, tpl) {
+    var a = Math.abs(v).toLocaleString('en-US', { minimumFractionDigits: tpl.d, maximumFractionDigits: tpl.d });
+    var sign = v < 0 && +a.replace(/,/g, '') !== 0 ? '\u2212' : (tpl.plus && v > 0 ? '+' : '');
+    return tpl.pre + sign + tpl.cur + a + tpl.post;
+  }
+  function tween(el, fromText, toText) {
+    var a = parseNum(fromText), b = parseNum(toText);
+    if (REDUCED || !a || !b || a.pre !== b.pre || a.post !== b.post || a.cur !== b.cur || a.val === b.val) return;
+    el.textContent = fmtNum(a.val, b);   // 새 값이 한 프레임 먼저 보이지 않도록 이전 값에서 시작
+    var t0 = performance.now(), dur = 420;
+    var step = function (t) {
+      var k = Math.min(1, (t - t0) / dur), e = 1 - Math.pow(1 - k, 3);
+      el.textContent = fmtNum(a.val + (b.val - a.val) * e, b);
+      if (k < 1) requestAnimationFrame(step); else el.textContent = toText;
+    };
+    requestAnimationFrame(step);
+  }
+  var KPI = /^vb_(ps|cs|g|dw)$/, HERO = /^(hero_title|welfare_title)$/;
+  function bindTweens() {
+    jQuery(document).on('shiny:value', function (e) {
+      var el = document.getElementById(e.name);
+      if (!el) return;
+      if (KPI.test(e.name)) {
+        var old = el.textContent;
+        setTimeout(function () {
+          if (old && old !== el.textContent) {
+            tween(el, old, el.textContent);
+            var card = el.closest('.kpi-card');
+            if (card) { card.classList.remove('updated'); void card.offsetWidth; card.classList.add('updated'); }
+          }
+        }, 0);
+      } else if (HERO.test(e.name)) {
+        var olds = [].map.call(el.querySelectorAll('.hl-gov, .hl-dwl'), function (x) { return x.textContent; });
+        setTimeout(function () {
+          el.querySelectorAll('.hl-gov, .hl-dwl').forEach(function (x, i) { if (olds[i]) tween(x, olds[i], x.textContent); });
+        }, 0);
+      }
+    });
+  }
+
+  /* ---- 8) 시작 화면: 첫 계산이 끝나면 걷어 낸다 ---- */
+  function hideLoading() {
+    var l = document.getElementById('app-loading');
+    if (!l || l.classList.contains('done')) return;
+    l.classList.add('done');
+    setTimeout(function () { if (l.parentNode) l.parentNode.removeChild(l); }, 400);
+  }
+  setTimeout(hideLoading, 20000);   // 무슨 일이 있어도 20초 뒤에는 걷어 낸다
+
   if (window.jQuery) {
+    bindTweens();
+    jQuery(document).one('shiny:idle', function () { setTimeout(hideLoading, 150); });
     jQuery(document).on('shiny:inputchanged', function (e) {
       if (e.name === 'lang') applyLang(e.value);
       else if (document.querySelector('input.param-num[data-for="' + e.name + '"]')) syncNumFromSlider(e.name, e.value);

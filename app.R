@@ -548,9 +548,9 @@ NAV_SECTIONS <- list(
 NAV_MEGA <- div(id = "nav-mega", class = "nav-mega", hidden = NA, role = "menu",
   div(class = "mega-cols", lapply(names(NAV_SECTIONS), function(tab)
     div(class = "mega-col", `data-tab` = tab,
-        lapply(NAV_SECTIONS[[tab]], function(s)
+        lapply(seq_along(NAV_SECTIONS[[tab]]), function(k) { s <- NAV_SECTIONS[[tab]][[k]]
           tags$a(href = paste0("#", s[1]), class = "nav-drop-item", role = "menuitem", `data-tab` = tab,
-                 `data-target` = s[1], `data-subtab` = s[4], L(s[2], s[3])))))))
+                 `data-target` = s[1], `data-subtab` = s[4], style = sprintf("--i: %d", k - 1), L(s[2], s[3])) })))))
 
 # ---- 전체 화면 ----------------------------------------------------------------------
 ui <- function(request) {
@@ -566,12 +566,22 @@ ui <- function(request) {
     fillable = FALSE,
     header = tagList(
       tags$head(
+        tags$link(rel = "icon", type = "image/svg+xml", href = asset_src("favicon.svg")),
+        tags$meta(name = "theme-color", content = COL$brand),
+        tags$meta(name = "description", content = "원유가격 연동제가 낙농가, 유가공업체, 가계에 미치는 영향을 탄력성과 가격을 바꿔 가며 계산하는 정책 시뮬레이터"),
         tags$link(rel = "stylesheet", href = "webfonts/pretendard/pretendardvariable-dynamic-subset.css"),
         tags$link(rel = "stylesheet", href = asset_src("style.css")),
         tags$script(src = asset_src("app.js"))),
       if (exists("useBusyIndicators", where = asNamespace("shiny"), inherits = FALSE))
         shiny::useBusyIndicators(spinners = TRUE, pulse = TRUE),
-      NAV_MEGA
+      NAV_MEGA,
+      # 첫 계산이 끝날 때까지 보이는 시작 화면 (www/app.js가 첫 계산 완료 뒤 걷어 낸다)
+      div(id = "app-loading", role = "status", `aria-live` = "polite",
+          div(class = "al-box",
+              tags$img(src = asset_src("favicon.svg"), width = 56, height = 56, alt = ""),
+              div(class = "al-title", L("원유가격 정책 시뮬레이터", "Raw Milk Price Policy Simulator")),
+              div(class = "al-sub", L("모형을 계산하고 있습니다", "Running the model")),
+              div(class = "al-bar", span())))
     ),
     sidebar = sidebar(
       width = 320, open = list(desktop = "open", mobile = "closed"),
@@ -898,11 +908,12 @@ server <- function(input, output, session) {
     else paste0("원유 ", wonL(r$Ps, "ko"), "에서 낙농가 생산량 ", KT(r$Qs), "이 유업체 구매량 ",
                 KT(r$Qd), "을 넘어 ", KT(r$stock), "이 남습니다")
   })
-  output$sd_plot <- renderPlot(plot_sd(res(), lang()), res = 96, alt = reactive({
+  # 그래프 캐시: 같은 설정(과 언어)이 다시 오면 저장해 둔 그림을 바로 보낸다
+  output$sd_plot <- bindCache(renderPlot(plot_sd(res(), lang()), res = 96, alt = reactive({
     r <- res()
     tr(paste0("수요와 공급 그래프. 원유가격 ", num(r$Ps), "원/L에서 공급량 ", num(r$Qs), "천 톤, 수요량 ", num(r$Qd), "천 톤, 잉여 ", num(r$stock), "천 톤."),
        paste0("Supply-demand chart. At ", num(r$Ps), " KRW/L, supply ", num(r$Qs), " kt, demand ", num(r$Qd), " kt, surplus ", num(r$stock), " kt."))
-  }))
+  })), inp(), lang())
 
   # ---- 가격과 탄력성이 바뀌면 ----
   whatif <- reactive({
@@ -923,13 +934,13 @@ server <- function(input, output, session) {
                       xpos = c((input$policy_price - 980) / 320, (input$eps_s - 0.05) / 1.95))
     list(df = df, cur = cur, m = m, lg = lg)
   })
-  output$whatif_plot <- renderPlot({
+  output$whatif_plot <- bindCache(renderPlot({
     w <- whatif(); plot_whatif(w$df, w$cur, w$m, w$lg)
   }, res = 96, alt = reactive({
     w <- whatif()
     paste0(METRIC_NAMES[[w$lg]][METRIC_IDS == w$m],
            tr2(w$lg, ": 원유가격과 공급탄력성에 따른 변화를 보여 주는 선 그래프.", ": line chart of changes by raw milk price and supply elasticity."))
-  }))
+  })), input$metric, inp(), lang())
 
   output$market_tbl <- renderTable({
     r <- res()
@@ -1015,7 +1026,7 @@ server <- function(input, output, session) {
 
   srlr <- reactive(list(SR = run_preset("SR"), LR = run_preset("LR")))
 
-  output$srlr_plot <- renderPlot({
+  output$srlr_plot <- bindCache(renderPlot({
     s <- srlr(); lg <- lang(); f <- if (lg == "en") 0.1 else 1
     lv <- tr2(lg, c("낙농가", "유업체", "잉여 처리", "사회 전체"), c("Farms", "Processors", "Surplus handling", "Total"))
     pl <- tr2(lg, c("단기 기본값", "장기 기본값"), c("Short-run default", "Long-run default"))
@@ -1037,7 +1048,7 @@ server <- function(input, output, session) {
             panel.grid.major.y = element_blank(), panel.grid.major.x = element_line(color = "#EDF0EE", linewidth = 0.4),
             axis.text.y = element_text(color = COL$ink, size = 12))
   }, res = 96, alt = reactive(tr("단기와 장기 기본 탄력성에서 이해관계자별 후생 변화를 비교한 막대그래프.",
-                                 "Bar chart comparing welfare changes by stakeholder under short- and long-run default elasticities.")))
+                                 "Bar chart comparing welfare changes by stakeholder under short- and long-run default elasticities."))), input$policy_price, input$Sa, input$sigma, input$Pv, input$payer, lang())
 
   output$reality_bar <- renderUI({
     q13 <- TREND$qty[TREND$year == 2013]; q14 <- TREND$qty[TREND$year == 2014]
@@ -1109,7 +1120,7 @@ server <- function(input, output, session) {
     tbl_ui(add_status(df, BASELINE_TBL$상태, lg), "lrllll")
   })
 
-  output$m2013_plot <- renderPlot({
+  output$m2013_plot <- bindCache(renderPlot({
     lg <- lang(); m <- MONTHLY_2013
     per <- tr2(lg, c("도입 전 (1-7월)", "도입 후 (8-12월)"), c("Pre-scheme (Jan-Jul)", "Post-scheme (Aug-Dec)"))
     m$기간 <- ifelse(m$month <= 7, per[1], per[2])
@@ -1135,11 +1146,11 @@ server <- function(input, output, session) {
       scale_y_continuous(NULL, limits = c(940, 1120), labels = function(x) num(x)) +
       theme_plot()
   }, res = 96, alt = reactive(tr("2013년 월별 원유수취가격 선 그래프입니다. 7월 965.10원에서 8월 1,061.55원으로 올랐습니다.",
-                                 "Line chart of 2013 monthly farm-gate prices, rising from 965.10 KRW in July to 1,061.55 KRW in August.")))
+                                 "Line chart of 2013 monthly farm-gate prices, rising from 965.10 KRW in July to 1,061.55 KRW in August."))), lang())
 
   # 단위가 다른 두 계열(가격, 생산량)의 '방향'을 비교하는 그래프이므로 2013년 = 100 지수로 한 축에 그린다.
   # 이중 축과 달리 축 눈금을 임의로 맞출 수 없어 정직하다. 절댓값은 '표' 탭에 있다.
-  output$trend_plot <- renderPlot({
+  output$trend_plot <- bindCache(renderPlot({
     lg <- lang()
     nm <- tr2(lg, c("원유가격", "생산량"), c("Price", "Output"))
     df <- rbind(data.frame(s = nm[1], year = TREND$year, y = TREND$price / TREND$price[1] * 100),
@@ -1165,7 +1176,7 @@ server <- function(input, output, session) {
       scale_y_continuous(tr2(lg, "지수 (2013년 = 100)", "Index (2013 = 100)"), limits = c(88, 128), breaks = seq(90, 125, 5)) +
       theme_plot()
   }, res = 96, alt = reactive(tr("2013년을 100으로 둔 원유가격과 생산량 지수. 2025년 가격은 122, 생산량은 93입니다.",
-                                 "Index of raw milk price and output with 2013 = 100. In 2025 price is 122 and output is 93.")))
+                                 "Index of raw milk price and output with 2013 = 100. In 2025 price is 122 and output is 93."))), lang())
   output$trend_tbl <- renderTable({
     lg <- lang()
     ev <- setNames(if (lg == "en") TREND_EVENTS_EN else TREND_EVENTS$label, TREND_EVENTS$year)
