@@ -144,10 +144,13 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 .price-delta { font-size: var(--fs-xs); color: var(--brand-800); font-weight: 600; }
 
 /* 슬라이더: 두꺼운 트랙 + 큰 손잡이 (누르기 쉽게) */
-.irs--shiny .irs-line { background: #DDE4E0; border: none; height: 8px; top: 25px; border-radius: var(--r-pill); }
-.irs--shiny .irs-bar { background: var(--brand-600); border: none; height: 8px; top: 25px; }
-.irs--shiny .irs-handle { top: 17px; width: 24px; height: 24px; border: 3px solid var(--brand-900); background: #FFFFFF;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.15); }
+/* 회색 선, 초록 막대, 손잡이를 같은 중심선(위에서 29px)에 맞춘다.
+   슬라이더 기본 스타일이 막대 높이(3px)와 손잡이 위치를 더 구체적인 선택자로 덮어써서 !important로 고정한다 */
+.irs--shiny .irs-line { top: 25px !important; height: 8px !important; background: #DDE4E0; border: none !important; border-radius: var(--r-pill) !important; }
+.irs--shiny .irs-bar, .irs--shiny .irs-bar--single { top: 25px !important; height: 8px !important; background: var(--brand-600) !important;
+  border: none !important; border-radius: var(--r-pill) 0 0 var(--r-pill) !important; }
+.irs--shiny .irs-handle { top: 17px !important; width: 24px !important; height: 24px !important; border: 3px solid var(--brand-900) !important;
+  background: #FFFFFF !important; border-radius: 50% !important; box-shadow: 0 1px 3px rgba(0,0,0,0.15); box-sizing: border-box; }
 .irs--shiny .irs-handle > i:first-child { display: none; }
 .irs--shiny .irs-single { background: var(--brand-900); font-size: var(--fs-xs); }
 .irs--shiny .irs-min, .irs--shiny .irs-max { background: transparent; color: var(--muted); font-size: var(--fs-xs); }
