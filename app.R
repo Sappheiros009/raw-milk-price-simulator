@@ -172,20 +172,31 @@ side_info_card <- function() div(class = "side-info",
       p(L("이 앱의 '원유'는 가공(살균, 가공유, 치즈 등) 이전의 낙농가 출하 우유를 의미합니다.",
           "In this app 'raw milk' means milk shipped by dairy farms before processing (pasteurisation, flavoured milk, cheese, etc.)."))))
 
-# ---- 파라미터 입력: 숫자 칸 + 슬라이더 ------------------------------------------------
+# ---- 슬라이더 눈금자 ------------------------------------------------------------------
+# 슬라이더 아래에 자 눈금을 그린다. major = 숫자를 쓰는 눈금, minor = 짧은 눈금만.
+# 슬라이더의 값 위치는 손잡이 반지름(12px)만큼 양끝을 비운 구간에 놓이므로 같은 식으로 맞춘다.
+slider_scale <- function(min, max, major, minor = NULL, d = 0) {
+  tick <- function(v, cls, lab = NULL)
+    span(class = paste("tick", cls), style = sprintf("left: calc(12px + (100%% - 24px) * %.5f)", (v - min) / (max - min)),
+         if (!is.null(lab)) span(class = "tick-lab", lab))
+  minor <- setdiff(round(minor, 6), round(major, 6))
+  div(class = "slider-scale", `aria-hidden` = "true",
+      lapply(minor, tick, cls = "minor"),
+      lapply(major, function(v) tick(v, "major", num(v, d))))
+}
+
+# ---- 파라미터 입력: 숫자 칸 + 슬라이더 + 눈금자 -------------------------------------------
 # 숫자 칸은 Shiny 입력이 아니라 슬라이더의 보조 칸이다(id 없음 → 별도 입력값이 생기지 않음).
 # 숫자를 입력하면 슬라이더가 움직이고, 슬라이더를 움직이면 숫자가 바뀐다 (www/app.js).
-param <- function(id, ko, en, min, max, value, step, note = NULL)
+param <- function(id, ko, en, min, max, value, step, major, minor = NULL, d = 1, note = NULL)
   div(class = "param",
       tags$label(class = "param-head",
                  span(class = "param-lab", L(ko, en)),
                  tags$input(type = "number", class = "param-num form-control", `data-for` = id,
                             min = min, max = max, step = step, value = value, inputmode = "decimal")),
       div(class = "param-slider", sliderInput(id, NULL, min = min, max = max, value = value, step = step, ticks = FALSE)),
-      div(class = "param-range",
-          span(paste0(num(min, if (step < 1) 2 else 0))),
-          if (!is.null(note)) span(class = "param-note", note),
-          span(paste0(num(max, if (step < 1) 2 else 0)))))
+      slider_scale(min, max, major, minor, d),
+      if (!is.null(note)) div(class = "param-note", note))
 
 # ---- 사이드바: 시뮬레이션 설정 --------------------------------------------------
 CONTROLS_UI <- tagList(
@@ -205,7 +216,8 @@ CONTROLS_UI <- tagList(
               "The price of 1 L of raw milk set by the scheme. Above the pre-scheme equilibrium P* (980.29 KRW/L) it acts as a price floor."),
       uiOutput("price_big"),
       div(class = "price-slider",
-          sliderInput("policy_price", NULL, min = 980, max = 1300, value = BASE$policy_default, step = 1, ticks = FALSE)),
+          sliderInput("policy_price", NULL, min = 980, max = 1300, value = BASE$policy_default, step = 1, ticks = FALSE),
+          slider_scale(980, 1300, major = c(1000, 1100, 1200, 1300), minor = seq(1000, 1300, 50))),
       div(class = "slider-note", L("980원은 도입 전 P*, 1,083원은 2013년 도입 후 가격입니다.", "980 is the pre-scheme P*; 1,083 is the price after the 2013 introduction."))),
   div(class = "side-section",
       lab_tip("탄력성", "Elasticities",
@@ -216,9 +228,11 @@ CONTROLS_UI <- tagList(
                                       choiceValues = c("SR", "LR"))),
       uiOutput("preset_state"),
       param("eps_s", "원유 공급탄력성 ε (낙농가)", "Raw milk supply elasticity ε (farms)",
-            0.05, 2, ELAST_PRESET$SR$eps_s, 0.05),
+            0.05, 2, ELAST_PRESET$SR$eps_s, 0.05,
+            major = c(0.05, 0.5, 1, 1.5, 2), minor = seq(0.25, 1.75, 0.25), d = 2),
       param("eta_r", "흰 우유 소매 수요탄력성 η", "Retail white milk demand elasticity η",
-            -1.5, -0.05, ELAST_PRESET$SR$eta_r, 0.05),
+            -1.5, -0.05, ELAST_PRESET$SR$eta_r, 0.05,
+            major = c(-1.5, -1, -0.5, -0.05), minor = seq(-1.25, -0.25, 0.25), d = 2),
       div(class = "derived", uiOutput("eta_farm_txt"))),
   accordion(
     open = FALSE, class = "side-acc",
@@ -226,8 +240,10 @@ CONTROLS_UI <- tagList(
       L("고급: 파생수요 계수 (Sa, σ)", "Advanced: derived demand (Sa, σ)"), value = "adv_derived",
       p(class = "help", L("원유 수요탄력성 ηa = Sa·η − Sb·σ (Muth). Sb = 1 − Sa",
                           "Raw milk demand elasticity ηa = Sa·η − Sb·σ (Muth). Sb = 1 − Sa")),
-      param("Sa", "소매가 중 원유 몫 Sa", "Raw milk share of retail price Sa", 0.2, 0.8, ELAST_DEFAULT$Sa, 0.01),
-      param("sigma", "원유와 기타 투입재의 대체탄력성 σ", "Substitution, raw milk vs. other inputs σ", 0, 1, ELAST_DEFAULT$sigma, 0.05)
+      param("Sa", "소매가 중 원유 몫 Sa", "Raw milk share of retail price Sa", 0.2, 0.8, ELAST_DEFAULT$Sa, 0.01,
+            major = seq(0.2, 0.8, 0.1), minor = seq(0.25, 0.75, 0.1)),
+      param("sigma", "원유와 기타 투입재의 대체탄력성 σ", "Substitution, raw milk vs. other inputs σ", 0, 1, ELAST_DEFAULT$sigma, 0.05,
+            major = seq(0, 1, 0.2), minor = seq(0.1, 0.9, 0.2))
     ),
     accordion_panel(
       L("고급: 잉여 원유 처리", "Advanced: surplus milk handling"), value = "adv_surplus",
@@ -237,7 +253,7 @@ CONTROLS_UI <- tagList(
                                       choiceNames = list(L("정부 매입", "Government"), L("유업체 매입", "Processors")),
                                       choiceValues = c("gov", "proc"), selected = SURPLUS_DEFAULT$payer)),
       param("Pv", "잉여 원유 처분가치 Pv (원/L)", "Salvage value of surplus Pv (KRW/L)", 0, 900, SURPLUS_DEFAULT$Pv, 10,
-            note = L("0 = 회수 가치 없음 (강의 모형)", "0 = no salvage (lecture model)"))
+            major = seq(0, 900, 300), minor = seq(100, 800, 100), d = 0, note = L("0 = 회수 가치 없음 (강의 모형)", "0 = no salvage (lecture model)"))
     )
   ),
   div(class = "side-actions",

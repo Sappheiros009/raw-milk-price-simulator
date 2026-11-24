@@ -184,8 +184,17 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 .param-slider .form-group { margin-bottom: 0 !important; }
 .param-slider .irs { margin-top: -6px; }
 .param-slider .irs-single, .param-slider .irs-min, .param-slider .irs-max { display: none; }
-.param-range { display: flex; justify-content: space-between; gap: var(--sp-2); font-size: var(--fs-xs); color: var(--muted); margin-top: 2px; }
-.param-note { text-align: center; }
+/* 슬라이더 눈금자: 짧은 세로 눈금 + 숫자 */
+.slider-scale { position: relative; height: 26px; margin-top: -8px; }
+.slider-scale .tick { position: absolute; top: 0; transform: translateX(-50%); display: flex; flex-direction: column; align-items: center; }
+.slider-scale .tick::before { content: ""; display: block; width: 1px; height: 7px; background: var(--muted); }
+.slider-scale .tick.minor::before { height: 4px; background: var(--line-strong); }
+.slider-scale .tick-lab { margin-top: 2px; font-size: var(--fs-xs); line-height: 1; color: var(--muted); white-space: nowrap;
+  font-variant-numeric: tabular-nums; }
+.param-note { font-size: var(--fs-xs); color: var(--muted); margin-top: var(--sp-1); }
+.price-slider + .slider-note { margin-top: var(--sp-2); }
+#preset_state:empty { display: none; }
+.seg + .shiny-html-output:empty { display: none; }
 
 /* 고급 설정 (접이식) */
 .side-acc { --bs-accordion-border-color: var(--line-strong); --bs-accordion-border-radius: var(--r-sm);
