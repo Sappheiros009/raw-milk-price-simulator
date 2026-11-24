@@ -68,8 +68,18 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
   height: 100%; border: 0 !important; }
 .navbar .nav-link::after { display: none !important; }
 .navbar .nav-link { transition: box-shadow .15s ease, color .15s ease; }
-.navbar .nav-item:hover > .nav-link, .navbar .nav-link:focus-visible { color: #FFFFFF !important; box-shadow: inset 0 -3px 0 rgba(203, 229, 215, 0.45); }
-.navbar .nav-link.active, .navbar .nav-item:hover > .nav-link.active { color: #FFFFFF !important; font-weight: 700; box-shadow: inset 0 -3px 0 var(--brand-200); }
+/* 평소: 현재 탭에 민트 밑줄. 탭 위에 마우스가 있는 동안: 마우스를 올린 탭에만 민트 밑줄과 밝은 배경을 주고,
+   현재 탭 표시는 잠시 숨긴다 (두 탭이 동시에 밝아 보이지 않도록) */
+.navbar .nav-link.active { color: #FFFFFF !important; font-weight: 700; box-shadow: inset 0 -3px 0 var(--brand-200); }
+.navbar:has(.nav-item.has-mega:hover) .nav-item:not(:hover) > .nav-link.active,
+.navbar:has(.mega-col:hover) .nav-link.active { box-shadow: none; }
+.navbar .nav-item:hover > .nav-link, .navbar .nav-link:focus-visible { color: #FFFFFF !important; box-shadow: inset 0 -3px 0 var(--brand-200); }
+/* 펼친 메뉴의 열 위에 있을 때는 그 열의 탭을 같은 방식으로 표시한다 */
+.navbar:has(.mega-col[data-tab="sim"]:hover) .nav-item[data-tab="sim"] > .nav-link,
+.navbar:has(.mega-col[data-tab="welfare"]:hover) .nav-item[data-tab="welfare"] > .nav-link,
+.navbar:has(.mega-col[data-tab="market"]:hover) .nav-item[data-tab="market"] > .nav-link,
+.navbar:has(.mega-col[data-tab="method"]:hover) .nav-item[data-tab="method"] > .nav-link {
+  color: #FFFFFF !important; box-shadow: inset 0 -3px 0 var(--brand-200) !important; background: rgba(255, 255, 255, 0.08) !important; }
 
 /* 넓은 메뉴: 탭에 마우스를 올리면 모든 탭의 구역이 열(탭별)로 한 번에 펼쳐진다.
    각 열은 해당 탭 바로 아래에 놓이고(www/app.js), 마우스를 올린 탭의 열이 강조된다. */
