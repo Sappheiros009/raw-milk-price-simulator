@@ -405,7 +405,19 @@ ui <- function(request) {
     header = tagList(
       tags$head(
         tags$link(rel = "stylesheet", href = "webfonts/pretendard/pretendardvariable-dynamic-subset.css"),
-        tags$link(rel = "stylesheet", href = asset_src("style.css"))),
+        tags$link(rel = "stylesheet", href = asset_src("style.css")),
+        # 사이드바 여닫기 버튼(세 줄 아이콘)의 이름을 한국어로, 열림 상태에 맞게 바꾼다
+        tags$script(HTML("
+          document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.bslib-sidebar-layout > .collapse-toggle').forEach(function (btn) {
+              var label = function () {
+                var t = btn.getAttribute('aria-expanded') === 'true' ? '설정 메뉴 닫기' : '설정 메뉴 열기';
+                btn.setAttribute('title', t); btn.setAttribute('aria-label', t);
+              };
+              label();
+              new MutationObserver(label).observe(btn, { attributes: true, attributeFilter: ['aria-expanded'] });
+            });
+          });"))),
       if (exists("useBusyIndicators", where = asNamespace("shiny"), inherits = FALSE))
         shiny::useBusyIndicators(spinners = TRUE, pulse = TRUE)
     ),

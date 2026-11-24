@@ -62,6 +62,27 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 .navbar-toggler { border-color: rgba(255,255,255,0.4); }
 .navbar-toggler-icon { filter: invert(1); }
 
+/* ===== 사이드바 여닫기 버튼: 화살표 대신 세 줄(햄버거) 메뉴 아이콘 =====
+   bslib의 버튼(.collapse-toggle)을 그대로 쓰고 모양만 바꾼다 (키보드·aria-expanded 동작 유지) */
+.bslib-sidebar-layout { --_icon-button-size: 40px; }
+.bslib-sidebar-layout > .collapse-toggle { width: 40px; height: 40px; top: var(--sp-3); padding: 0;
+  display: inline-flex; align-items: center; justify-content: center; gap: var(--sp-2);
+  background: var(--surface); color: var(--ink); border: 1px solid var(--line-strong); border-radius: var(--r-sm);
+  box-shadow: 0 1px 2px rgba(0,0,0,0.06); transition: background-color .15s, color .15s; }
+.bslib-sidebar-layout > .collapse-toggle:hover { background: var(--brand-50); color: var(--brand-900); border-color: var(--brand-600); }
+/* 화살표는 숨기되 display:none으로 없애지 않는다: bslib가 이 아이콘의 회전 애니메이션이 끝나는 것을 보고 열림 상태를 갱신한다 */
+.bslib-sidebar-layout > .collapse-toggle > .collapse-icon { position: absolute; opacity: 0; pointer-events: none; }
+.bslib-sidebar-layout > .collapse-toggle::before { content: ""; flex: none; width: 18px; height: 14px;
+  background: linear-gradient(currentColor, currentColor) top / 100% 2px no-repeat,
+              linear-gradient(currentColor, currentColor) center / 100% 2px no-repeat,
+              linear-gradient(currentColor, currentColor) bottom / 100% 2px no-repeat; }
+/* 닫힌 상태: 아이콘 옆에 '설정' 글자를 붙여 무엇을 여는 버튼인지 알린다 */
+.bslib-sidebar-layout.sidebar-collapsed > .collapse-toggle { width: auto; padding: 0 var(--sp-3); white-space: nowrap;
+  left: var(--sp-3) !important; right: auto !important; }
+.bslib-sidebar-layout.sidebar-collapsed > .collapse-toggle::after { content: "설정"; font-size: var(--fs-sm); font-weight: 700; }
+/* 열린 상태에서 제목이 버튼 밑으로 들어가지 않게 */
+.side-head { padding-right: 44px; }
+
 /* ===== 사이드바 ===== */
 .bslib-sidebar-layout > .sidebar { background: var(--side); border-right: 1px solid var(--line); }
 .bslib-sidebar-layout > .sidebar > .sidebar-content { padding: var(--sp-5) var(--sp-5) var(--sp-6); gap: 0; }
