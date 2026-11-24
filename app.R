@@ -543,11 +543,24 @@ NAV_SECTIONS <- list(
                 c("sec-data", "자료 출처", "Data sources", "method_data:sources"),
                 c("sec-data", "탄력성 표", "Elasticity table", "method_data:elast"))
 )
-NAV_DROPS <- div(id = "nav-drops", hidden = NA, lapply(names(NAV_SECTIONS), function(tab)
-  div(class = "nav-drop", `data-tab` = tab, role = "menu",
-      lapply(NAV_SECTIONS[[tab]], function(s)
-        tags$a(href = paste0("#", s[1]), class = "nav-drop-item", role = "menuitem", `data-tab` = tab, `data-target` = s[1],
-               `data-subtab` = s[4], L(s[2], s[3]))))))
+# 한 번에 모든 탭의 구역을 보여 주는 넓은 메뉴. 탭마다 한 열이고, 각 열은 해당 탭 바로 아래에 놓인다.
+NAV_TAB_INFO <- list(
+  sim     = c("시뮬레이터", "Simulator", "가격과 탄력성을 바꿔 결과를 봅니다", "Change price and elasticities"),
+  welfare = c("후생 결과", "Welfare", "누가 얻고 누가 부담하는지 봅니다", "Who gains and who pays"),
+  market  = c("정책과 시장", "Policy & market", "제도의 작동 방식과 시장 자료입니다", "How the scheme works, market data"),
+  method  = c("방법론", "Methodology", "수식, 가정, 검증, 자료 출처입니다", "Formulas, assumptions, checks, sources")
+)
+NAV_MEGA <- div(id = "nav-mega", class = "nav-mega", hidden = NA, role = "menu",
+  div(class = "mega-cols", lapply(names(NAV_SECTIONS), function(tab) {
+    info <- NAV_TAB_INFO[[tab]]
+    div(class = "mega-col", `data-tab` = tab,
+        tags$a(href = "#", class = "mega-head", role = "menuitem", `data-tab` = tab,
+               span(class = "mega-title", L(info[1], info[2])),
+               span(class = "mega-desc", L(info[3], info[4]))),
+        lapply(NAV_SECTIONS[[tab]], function(s)
+          tags$a(href = paste0("#", s[1]), class = "nav-drop-item", role = "menuitem", `data-tab` = tab,
+                 `data-target` = s[1], `data-subtab` = s[4], L(s[2], s[3]))))
+  })))
 
 # ---- 전체 화면 ----------------------------------------------------------------------
 ui <- function(request) {
@@ -568,7 +581,7 @@ ui <- function(request) {
         tags$script(src = asset_src("app.js"))),
       if (exists("useBusyIndicators", where = asNamespace("shiny"), inherits = FALSE))
         shiny::useBusyIndicators(spinners = TRUE, pulse = TRUE),
-      NAV_DROPS
+      NAV_MEGA
     ),
     sidebar = sidebar(
       width = 320, open = list(desktop = "open", mobile = "closed"),

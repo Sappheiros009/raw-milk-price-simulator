@@ -61,25 +61,43 @@
     bootstrap.Tab.getOrCreateInstance(link).show();
   }
   function buildNavDrops() {
-    var holder = document.getElementById('nav-drops');
-    if (!holder) return;
-    holder.querySelectorAll('.nav-drop').forEach(function (drop) {
-      var tab = drop.getAttribute('data-tab');
-      var link = document.querySelector('.navbar a.nav-link[data-value="' + tab + '"]');
-      if (!link) return;
-      var li = link.closest('.nav-item') || link.parentElement;
-      li.classList.add('has-drop');
+    var mega = document.getElementById('nav-mega');
+    var nav = document.querySelector('.bslib-page-navbar > .navbar');
+    if (!mega || !nav) return;
+    nav.appendChild(mega);
+    mega.removeAttribute('hidden');
+    // 탭마다 data-tab을 달아, 마우스를 올린 탭의 열을 강조한다
+    document.querySelectorAll('.navbar a.nav-link[data-value]').forEach(function (link) {
+      var li = link.closest('.nav-item'); if (li) { li.setAttribute('data-tab', link.getAttribute('data-value')); li.classList.add('has-mega'); }
       link.setAttribute('aria-haspopup', 'true');
-      li.appendChild(drop);
     });
-    holder.remove();
+    // 각 열을 해당 탭의 왼쪽 끝에 맞춘다
+    var place = function () {
+      // 각 열의 왼쪽 끝과 폭을 해당 탭과 같게 한다 (탭 사이 간격도 열 사이 간격으로 옮긴다)
+      var navRect = nav.getBoundingClientRect(), x = null;
+      mega.querySelector('.mega-cols').style.setProperty('--mega-left', '0px');
+      mega.querySelectorAll('.mega-col').forEach(function (col) {
+        var li = document.querySelector('.navbar .nav-item[data-tab="' + col.getAttribute('data-tab') + '"]');
+        if (!li) return;
+        var r = li.getBoundingClientRect(), left = r.left - navRect.left;
+        col.style.marginLeft = (x === null ? left : left - x) + 'px';
+        col.style.width = r.width + 'px';
+        x = left + r.width;
+      });
+    };
+    place();
+    window.addEventListener('resize', place);
+    if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
+    setTimeout(place, 500);
+    var close = function () { nav.classList.add('mega-closed'); setTimeout(function () { nav.classList.remove('mega-closed'); }, 400); };
     document.addEventListener('click', function (e) {
+      var head = e.target.closest('.mega-head');
       var a = e.target.closest('.nav-drop-item');
-      if (!a) return;
+      if (!head && !a) return;
       e.preventDefault();
-      goTab(a.getAttribute('data-tab'), a.getAttribute('data-target'), a.getAttribute('data-subtab'));
-      a.blur();
-      var li = a.closest('.nav-item'); if (li) { li.classList.add('drop-closed'); setTimeout(function () { li.classList.remove('drop-closed'); }, 400); }
+      if (head) goTab(head.getAttribute('data-tab'), null);
+      else goTab(a.getAttribute('data-tab'), a.getAttribute('data-target'), a.getAttribute('data-subtab'));
+      (head || a).blur(); close();
     });
   }
 

@@ -33,6 +33,8 @@
   --focus: 0 0 0 3px rgba(63, 140, 110, 0.35);
 }
 
+/* 한글은 단어 중간에서 줄을 바꾸지 않는다 (예: '후생 변/화' 방지) */
+body { word-break: keep-all; overflow-wrap: break-word; }
 body { background: var(--canvas); color: var(--ink); font-size: var(--fs-md); line-height: 1.6;
   letter-spacing: -0.01em; -webkit-font-smoothing: antialiased; }
 h1, h2, h3, h4, h5, h6 { letter-spacing: -0.02em; }
@@ -69,16 +71,46 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 .navbar .nav-item:hover > .nav-link, .navbar .nav-link:focus-visible { color: #FFFFFF !important; box-shadow: inset 0 -3px 0 rgba(203, 229, 215, 0.45); }
 .navbar .nav-link.active, .navbar .nav-item:hover > .nav-link.active { color: #FFFFFF !important; font-weight: 700; box-shadow: inset 0 -3px 0 var(--brand-200); }
 
-/* 마우스를 올리면 탭 아래로 구역 목록이 펼쳐진다 */
-.nav-drop { position: absolute; top: 100%; left: 0; min-width: 240px; padding: var(--sp-2); z-index: 1100;
-  background: var(--surface); border: 1px solid var(--line); border-radius: 0 0 var(--r-md) var(--r-md);
-  box-shadow: 0 12px 28px rgba(16, 40, 32, 0.16); display: flex; flex-direction: column;
+/* 넓은 메뉴: 탭에 마우스를 올리면 모든 탭의 구역이 열(탭별)로 한 번에 펼쳐진다.
+   각 열은 해당 탭 바로 아래에 놓이고(www/app.js), 마우스를 올린 탭의 열이 강조된다. */
+/* 탭 4개는 같은 폭으로: 아래 넓은 메뉴의 열과 정확히 맞는다. 언어 단추 등 다른 항목에는 적용하지 않는다 */
+.navbar .nav-item:has(> .nav-link[data-value]) { width: 172px; flex: none; }
+.navbar .nav-link[data-value] { width: 100%; justify-content: flex-start; padding: 0 var(--sp-5) !important; font-size: 15px; }
+/* 상단 바는 한 줄로 유지 */
+.navbar .navbar-collapse, .navbar .navbar-nav { flex-wrap: nowrap; }
+.navbar .nav-item:not(:has(> .nav-link[data-value])) { align-items: center; }
+@media (max-width: 1400px) { .nav-note { display: none; } }
+.bslib-page-navbar > .navbar { position: relative; }
+.nav-mega { position: absolute; left: 0; right: 0; top: 100%; z-index: 1100;
+  background: var(--surface); border-bottom: 1px solid var(--line); box-shadow: 0 18px 36px rgba(16, 40, 32, 0.16);
   opacity: 0; visibility: hidden; transform: translateY(-6px); transition: opacity .15s ease, transform .15s ease, visibility .15s; }
-.nav-item.has-drop:hover > .nav-drop, .nav-item.has-drop:focus-within > .nav-drop { opacity: 1; visibility: visible; transform: none; }
-.nav-item.drop-closed > .nav-drop { opacity: 0 !important; visibility: hidden !important; }
-.nav-drop-item { display: block; padding: var(--sp-2) var(--sp-3); border-radius: var(--r-sm); font-size: var(--fs-md);
-  color: var(--ink); text-decoration: none; white-space: nowrap; }
+.navbar:has(.navbar-nav .nav-item.has-mega:hover) .nav-mega, .nav-mega:hover, .nav-mega:focus-within,
+.navbar:has(.navbar-nav .nav-link:focus-visible) .nav-mega { opacity: 1; visibility: visible; transform: none; }
+.navbar.mega-closed .nav-mega { opacity: 0 !important; visibility: hidden !important; }
+/* 열은 왼쪽부터 차례로 놓고, 첫 열의 시작점과 각 열의 폭을 탭에 맞춘다(www/app.js). 높이는 내용만큼 */
+.mega-cols { display: flex; align-items: stretch; padding-left: var(--mega-left, 300px); }
+.mega-col { flex: none; width: 172px; display: flex; flex-direction: column; gap: 2px;
+  padding: var(--sp-4) var(--sp-2) var(--sp-5); border-left: 1px solid var(--line); }
+.mega-col:first-child { border-left: none; }
+.mega-head { display: block; padding: var(--sp-2) var(--sp-4) var(--sp-3); margin-bottom: var(--sp-1); text-decoration: none;
+  border-bottom: 2px solid var(--line); border-radius: var(--r-sm) var(--r-sm) 0 0; }
+.mega-title { display: block; font-size: var(--fs-lg); font-weight: 700; color: var(--ink); }
+.mega-desc { display: block; font-size: var(--fs-xs); color: var(--muted); margin-top: 2px; }
+.mega-head:hover .mega-title { color: var(--brand-800); text-decoration: underline; }
+.nav-drop-item { display: block; padding: 6px var(--sp-4); border-radius: var(--r-sm); font-size: var(--fs-md); line-height: 1.4;
+  color: var(--sub); text-decoration: none; white-space: normal; }
 .nav-drop-item:hover, .nav-drop-item:focus-visible { background: var(--brand-50); color: var(--brand-900); }
+/* 마우스를 올린 탭의 열: 배경과 제목 밑줄 강조 */
+.navbar:has(.nav-item[data-tab="sim"]:hover) .mega-col[data-tab="sim"],
+.navbar:has(.nav-item[data-tab="welfare"]:hover) .mega-col[data-tab="welfare"],
+.navbar:has(.nav-item[data-tab="market"]:hover) .mega-col[data-tab="market"],
+.navbar:has(.nav-item[data-tab="method"]:hover) .mega-col[data-tab="method"],
+.mega-col:hover { background: var(--brand-50); }
+.navbar:has(.nav-item[data-tab="sim"]:hover) .mega-col[data-tab="sim"] .mega-head,
+.navbar:has(.nav-item[data-tab="welfare"]:hover) .mega-col[data-tab="welfare"] .mega-head,
+.navbar:has(.nav-item[data-tab="market"]:hover) .mega-col[data-tab="market"] .mega-head,
+.navbar:has(.nav-item[data-tab="method"]:hover) .mega-col[data-tab="method"] .mega-head,
+.mega-col:hover .mega-head { border-bottom-color: var(--brand-600); }
 
 .nav-note { font-size: var(--fs-xs); color: rgba(255,255,255,0.72); padding: 0 var(--sp-3); align-self: center; }
 .navbar .navbar-brand { cursor: pointer; }
