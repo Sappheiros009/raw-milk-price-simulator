@@ -91,13 +91,11 @@
     setTimeout(place, 500);
     var close = function () { nav.classList.add('mega-closed'); setTimeout(function () { nav.classList.remove('mega-closed'); }, 400); };
     document.addEventListener('click', function (e) {
-      var head = e.target.closest('.mega-head');
       var a = e.target.closest('.nav-drop-item');
-      if (!head && !a) return;
+      if (!a) return;
       e.preventDefault();
-      if (head) goTab(head.getAttribute('data-tab'), null);
-      else goTab(a.getAttribute('data-tab'), a.getAttribute('data-target'), a.getAttribute('data-subtab'));
-      (head || a).blur(); close();
+      goTab(a.getAttribute('data-tab'), a.getAttribute('data-target'), a.getAttribute('data-subtab'));
+      a.blur(); close();
     });
   }
 

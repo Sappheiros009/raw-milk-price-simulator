@@ -74,7 +74,9 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 /* 넓은 메뉴: 탭에 마우스를 올리면 모든 탭의 구역이 열(탭별)로 한 번에 펼쳐진다.
    각 열은 해당 탭 바로 아래에 놓이고(www/app.js), 마우스를 올린 탭의 열이 강조된다. */
 /* 탭 4개는 같은 폭으로: 아래 넓은 메뉴의 열과 정확히 맞는다. 언어 단추 등 다른 항목에는 적용하지 않는다 */
-.navbar .nav-item:has(> .nav-link[data-value]) { width: 172px; flex: none; }
+.navbar .nav-item:has(> .nav-link[data-value]) { width: 188px; flex: none; }
+/* 탭 사이 간격(Bootstrap nav-underline의 gap)을 없애, 탭과 아래 열이 빈틈없이 이어지게 한다 */
+.navbar .navbar-nav { gap: 0 !important; --bs-nav-underline-gap: 0; }
 .navbar .nav-link[data-value] { width: 100%; justify-content: flex-start; padding: 0 var(--sp-5) !important; font-size: 15px; }
 /* 상단 바는 한 줄로 유지 */
 .navbar .navbar-collapse, .navbar .navbar-nav { flex-wrap: nowrap; }
@@ -89,28 +91,18 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
 .navbar.mega-closed .nav-mega { opacity: 0 !important; visibility: hidden !important; }
 /* 열은 왼쪽부터 차례로 놓고, 첫 열의 시작점과 각 열의 폭을 탭에 맞춘다(www/app.js). 높이는 내용만큼 */
 .mega-cols { display: flex; align-items: stretch; padding-left: var(--mega-left, 300px); }
-.mega-col { flex: none; width: 172px; display: flex; flex-direction: column; gap: 2px;
-  padding: var(--sp-4) var(--sp-2) var(--sp-5); border-left: 1px solid var(--line); }
-.mega-col:first-child { border-left: none; }
-.mega-head { display: block; padding: var(--sp-2) var(--sp-4) var(--sp-3); margin-bottom: var(--sp-1); text-decoration: none;
-  border-bottom: 2px solid var(--line); border-radius: var(--r-sm) var(--r-sm) 0 0; }
-.mega-title { display: block; font-size: var(--fs-lg); font-weight: 700; color: var(--ink); }
-.mega-desc { display: block; font-size: var(--fs-xs); color: var(--muted); margin-top: 2px; }
-.mega-head:hover .mega-title { color: var(--brand-800); text-decoration: underline; }
-.nav-drop-item { display: block; padding: 6px var(--sp-4); border-radius: var(--r-sm); font-size: var(--fs-md); line-height: 1.4;
+.mega-col { flex: none; width: 188px; display: flex; flex-direction: column; gap: 2px; padding: var(--sp-3) 0 var(--sp-5); }
+/* 항목 글자를 위 탭 이름과 같은 위치(왼쪽 24px)에 맞춘다 */
+.nav-drop-item { display: block; padding: 7px var(--sp-5); font-size: var(--fs-md); line-height: 1.4;
   color: var(--sub); text-decoration: none; white-space: normal; }
-.nav-drop-item:hover, .nav-drop-item:focus-visible { background: var(--brand-50); color: var(--brand-900); }
-/* 마우스를 올린 탭의 열: 배경과 제목 밑줄 강조 */
+.nav-drop-item:hover, .nav-drop-item:focus-visible { background: var(--brand-100); color: var(--brand-900); }
+/* 마우스를 올린 탭과 그 열을 같은 폭으로 칠한다: 탭은 밝은 띠, 열은 연한 배경 */
+.navbar .nav-item.has-mega:hover > .nav-link { background: rgba(255, 255, 255, 0.08) !important; }
 .navbar:has(.nav-item[data-tab="sim"]:hover) .mega-col[data-tab="sim"],
 .navbar:has(.nav-item[data-tab="welfare"]:hover) .mega-col[data-tab="welfare"],
 .navbar:has(.nav-item[data-tab="market"]:hover) .mega-col[data-tab="market"],
 .navbar:has(.nav-item[data-tab="method"]:hover) .mega-col[data-tab="method"],
 .mega-col:hover { background: var(--brand-50); }
-.navbar:has(.nav-item[data-tab="sim"]:hover) .mega-col[data-tab="sim"] .mega-head,
-.navbar:has(.nav-item[data-tab="welfare"]:hover) .mega-col[data-tab="welfare"] .mega-head,
-.navbar:has(.nav-item[data-tab="market"]:hover) .mega-col[data-tab="market"] .mega-head,
-.navbar:has(.nav-item[data-tab="method"]:hover) .mega-col[data-tab="method"] .mega-head,
-.mega-col:hover .mega-head { border-bottom-color: var(--brand-600); }
 
 .nav-note { font-size: var(--fs-xs); color: rgba(255,255,255,0.72); padding: 0 var(--sp-3); align-self: center; }
 .navbar .navbar-brand { cursor: pointer; }
