@@ -33,9 +33,18 @@
   }
 
   /* ---- 2) 상단 메뉴 펼침 목록 ---- */
-  function goTab(tab, target) {
+  // 묶인 카드 안의 탭 열기: "카드id:탭값"
+  function openSubtab(sub) {
+    if (!sub) return;
+    var parts = sub.split(':');
+    var a = document.querySelector('#' + parts[0] + ' a[data-value="' + parts[1] + '"]') ||
+            document.querySelector('[data-tabsetid] a[data-value="' + parts[1] + '"]');
+    if (a && !a.classList.contains('active')) bootstrap.Tab.getOrCreateInstance(a).show();
+  }
+  function goTab(tab, target, sub) {
     var link = document.querySelector('.navbar a.nav-link[data-value="' + tab + '"]');
     if (!link) return;
+    openSubtab(sub);
     var go = function () {
       var el = target && document.getElementById(target);
       if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
@@ -68,9 +77,45 @@
       var a = e.target.closest('.nav-drop-item');
       if (!a) return;
       e.preventDefault();
-      goTab(a.getAttribute('data-tab'), a.getAttribute('data-target'));
+      goTab(a.getAttribute('data-tab'), a.getAttribute('data-target'), a.getAttribute('data-subtab'));
       a.blur();
       var li = a.closest('.nav-item'); if (li) { li.classList.add('drop-closed'); setTimeout(function () { li.classList.remove('drop-closed'); }, 400); }
+    });
+  }
+
+  /* ---- 6) 가로로 넘기는 카드 ----
+     이름 단추, 좌우 화살표, 키보드 ← →로 넘긴다. 트랙패드 가로 쓸기와 Shift + 휠은 브라우저 기본 동작으로 된다.
+     세로 휠은 페이지 스크롤에 그대로 두어, 카드 위에서 스크롤이 막히지 않게 한다. */
+  function initCarousels() {
+    document.querySelectorAll('.carousel-x').forEach(function (c) {
+      var track = c.querySelector('.cx-track');
+      var slides = track.children, n = slides.length;
+      var dots = c.querySelectorAll('.cx-dot');
+      var prev = c.querySelector('.cx-prev'), next = c.querySelector('.cx-next'), count = c.querySelector('.cx-count');
+      var cur = 0;
+      var idx = function () { var w = track.clientWidth; return w ? Math.round(track.scrollLeft / w) : cur; };
+      var paint = function (i) {
+        cur = i;
+        dots.forEach(function (d, j) { d.classList.toggle('on', j === i); d.setAttribute('aria-selected', j === i ? 'true' : 'false'); });
+        prev.disabled = (i === 0); next.disabled = (i === n - 1);
+        count.textContent = (i + 1) + ' / ' + n;
+      };
+      var go = function (i, smooth) {
+        i = Math.max(0, Math.min(n - 1, i));
+        track.scrollTo({ left: i * track.clientWidth, behavior: smooth === false ? 'auto' : 'smooth' });
+        paint(i);
+      };
+      prev.addEventListener('click', function () { go(cur - 1); });
+      next.addEventListener('click', function () { go(cur + 1); });
+      dots.forEach(function (d, j) { d.addEventListener('click', function () { go(j); }); });
+      var t; track.addEventListener('scroll', function () { clearTimeout(t); t = setTimeout(function () { paint(idx()); }, 80); });
+      track.addEventListener('keydown', function (e) {
+        if (e.key === 'ArrowRight') { e.preventDefault(); go(cur + 1); }
+        if (e.key === 'ArrowLeft')  { e.preventDefault(); go(cur - 1); }
+      });
+      // 폭이 바뀌면(사이드바 여닫기, 창 크기) 보던 장을 그대로 맞춘다
+      if (window.ResizeObserver) new ResizeObserver(function () { if (track.clientWidth) track.scrollLeft = cur * track.clientWidth; }).observe(track);
+      paint(0);
     });
   }
 
@@ -122,6 +167,7 @@
   document.addEventListener('DOMContentLoaded', function () {
     formatNums();
     buildNavDrops();
+    initCarousels();
     bindHome();
     bindParams();
     document.querySelectorAll('.bslib-sidebar-layout > .collapse-toggle').forEach(function (btn) {

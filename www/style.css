@@ -435,3 +435,34 @@ a:focus-visible, button:focus-visible, .btn:focus-visible, [tabindex]:focus-visi
   .chain { flex-wrap: wrap; }
   .chain-step { flex: 1 1 45%; }
 }
+
+/* ===== 가로로 넘기는 카드 (캐러셀) ===== */
+.carousel-x { position: relative; }
+.cx-nav { display: flex; align-items: center; justify-content: space-between; gap: var(--sp-3); margin-bottom: var(--sp-3); }
+.cx-tabs { display: flex; flex-wrap: wrap; gap: var(--sp-1); }
+.cx-dot { border: 1px solid var(--line-strong); background: var(--surface); color: var(--sub); border-radius: var(--r-pill);
+  padding: 3px var(--sp-3); font-size: var(--fs-sm); font-weight: 600; cursor: pointer; transition: background-color .15s, color .15s; }
+.cx-dot:hover { background: var(--brand-50); color: var(--brand-900); }
+.cx-dot.on { background: var(--brand-900); border-color: var(--brand-900); color: #FFFFFF; }
+.cx-btns { display: flex; align-items: center; gap: var(--sp-1); flex: none; }
+.cx-count { font-size: var(--fs-xs); color: var(--muted); margin-right: var(--sp-1); font-variant-numeric: tabular-nums; }
+.cx-prev, .cx-next { width: 32px; height: 32px; border-radius: 50%; border: 1px solid var(--line-strong); background: var(--surface);
+  color: var(--ink); display: inline-flex; align-items: center; justify-content: center; cursor: pointer; padding: 0; }
+.cx-prev:hover:not(:disabled), .cx-next:hover:not(:disabled) { background: var(--brand-50); border-color: var(--brand-600); }
+.cx-prev:disabled, .cx-next:disabled { opacity: 0.35; cursor: default; }
+.cx-track { display: flex; overflow-x: auto; scroll-snap-type: x mandatory; scrollbar-width: none; overscroll-behavior-x: contain;
+  border-radius: var(--r-sm); }
+.cx-track::-webkit-scrollbar { display: none; }
+.cx-track:focus-visible { box-shadow: var(--focus); outline: none; }
+.cx-slide { flex: 0 0 100%; min-width: 0; scroll-snap-align: start; padding: var(--sp-1) 2px; }
+.cx-slide .policy-item { border-bottom: none; padding: 0; }
+.cx-slide .note-list li { margin-bottom: var(--sp-2); }
+
+/* 탭으로 묶은 카드 */
+.tab-card { display: flex; flex-direction: column; flex: 1 1 auto !important; }
+.bslib-grid-item:has(> .tab-card) { flex-direction: column; }
+.tab-card > .card { flex: 1 1 auto !important; margin-bottom: 0 !important; }
+/* 카드 높이가 늘어나면 출처 줄은 카드 아래쪽에 붙인다 */
+.card-body > .carousel-x + .src-line { margin-top: auto; padding-top: var(--sp-3); }
+.tab-card .card-header { padding-bottom: 0; }
+.tab-card .nav-underline .nav-link { font-size: var(--fs-sm); }

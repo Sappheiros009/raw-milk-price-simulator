@@ -299,6 +299,41 @@ METRIC_NAMES <- list(
 METRIC_CONCEPT <- c(dW = "dwl", dPS = "farm", dCS = "proc", G = "gov", stock = "gov")
 metric_val <- function(r, m) switch(m, dW = r$dW, dPS = r$dPS, dCS = r$dCS, G = -r$G, stock = r$stock)
 
+# ---- 가로로 넘기는 카드 (캐러셀) ------------------------------------------------------
+# 서로 독립적이고 무게가 비슷한 항목에만 쓴다. 넘기는 방법: 아래 이름 단추, 좌우 화살표,
+# 트랙패드 가로 쓸기, Shift + 휠, 키보드 ← →. 세로 휠은 가로챌 필요가 없어 건드리지 않는다 (www/app.js).
+carousel <- function(id, slides, lab_ko, lab_en) {
+  n <- length(slides)
+  div(class = "carousel-x", id = id, role = "region", `aria-roledescription` = "carousel",
+      div(class = "cx-nav",
+          div(class = "cx-tabs", role = "tablist",
+              lapply(seq_len(n), function(i)
+                tags$button(type = "button", class = paste("cx-dot", if (i == 1) "on"), role = "tab", `data-i` = i - 1,
+                            L(lab_ko[i], lab_en[i])))),
+          div(class = "cx-btns",
+              span(class = "cx-count", paste0("1 / ", n)),
+              tags$button(type = "button", class = "cx-prev", `aria-label` = "이전 / Previous", bs_icon("chevron-left")),
+              tags$button(type = "button", class = "cx-next", `aria-label` = "다음 / Next", bs_icon("chevron-right")))),
+      div(class = "cx-track", tabindex = "0",
+          lapply(seq_len(n), function(i)
+            div(class = "cx-slide", role = "group", `aria-roledescription` = "slide", `aria-label` = paste0(i, " / ", n),
+                slides[[i]]))))
+}
+
+# 가정 9개를 주제별 4묶음으로
+ASSUME_GROUPS <- list(c(1, 4, 7), c(2, 3), c(5, 6), c(8, 9))
+ASSUME_LAB_KO <- c("시장과 곡선", "기준연도와 가격", "가격하한과 비용", "기간과 가계")
+ASSUME_LAB_EN <- c("Market & curves", "Base year & prices", "Floor & costs", "Horizon & households")
+assume_carousel <- function(id)
+  carousel(id, lapply(ASSUME_GROUPS, function(g)
+    tags$ul(class = "note-list", lapply(g, function(i) tags$li(L(ASSUMPTIONS[i], ASSUMPTIONS_EN[i]))))),
+    ASSUME_LAB_KO, ASSUME_LAB_EN)
+
+# 탭으로 묶은 카드: 같은 자리에서 내용을 바꿔 본다
+tab_card <- function(id, anchor, title, ..., footer = NULL)
+  div(id = anchor, class = "anchor tab-card",
+      navset_card_underline(id = id, title = span(class = "ch-title", title), ..., footer = footer))
+
 # ---- 탭: 시뮬레이터 -------------------------------------------------------
 sim_ui <- tagList(
   hero(L("시뮬레이터", "Simulator"), uiOutput("hero_title", inline = TRUE), uiOutput("hero_sub", inline = TRUE),
@@ -330,22 +365,20 @@ sim_ui <- tagList(
                               "The dot is the current setting. The top panel holds elasticities at their current values; the bottom panel holds the price. Both share the same vertical axis.")))
   ),
   layout_columns(
-    col_widths = c(5, 7),
-    xcard(L("원유 시장 결과", "Raw milk market outcome"), aside = L("기준 = 2013년 도입 전", "Base = 2013 pre-scheme"), id = "sec-market",
-          div(class = "tbl-wrap", tableOutput("market_tbl")),
-          p(class = "foot", L("괄호는 기준 대비 변화율입니다. 흰 우유 소매가는 전가율 Sa로 계산한 참고값입니다.",
-                              "Brackets show % change from base. The white milk retail price is a reference value using pass-through Sa."))),
-    xcard(L("사용 중인 탄력성", "Elasticities in use"), id = "sec-elnow",
-          uiOutput("elast_now_tbl"),
-          status_legend())
+    col_widths = c(7, 5),
+    tab_card("sim_detail", "sec-detail", L("상세 결과", "Details"),
+             nav_panel(L("원유 시장 결과", "Market outcome"), value = "market",
+                       div(class = "tbl-wrap", tableOutput("market_tbl")),
+                       p(class = "foot", L("기준은 2013년 도입 전이고, 괄호는 기준 대비 변화율입니다. 흰 우유 소매가는 전가율 Sa로 계산한 참고값입니다.",
+                                           "Base is 2013 before the scheme; brackets show % change from base. The white milk retail price is a reference value using pass-through Sa."))),
+             nav_panel(L("사용 중인 탄력성", "Elasticities in use"), value = "elast",
+                       uiOutput("elast_now_tbl"),
+                       status_legend())),
+    xcard(L("이 결과의 가정", "Assumptions behind this result"), id = "sec-assume",
+          assume_carousel("cx-assume-sim"),
+          p(class = "foot", L("수식, 탄력성 출처, 검증은 방법론 탭에 있습니다.",
+                              "Formulas, elasticity sources and validation are in the Methodology tab.")))
   ),
-  div(id = "sec-assume", class = "anchor",
-      accordion(
-        open = FALSE, class = "assume-box",
-        accordion_panel(L("이 결과의 가정", "Assumptions behind this result"), value = "assume",
-                        tags$ul(class = "assume", lapply(seq_along(ASSUMPTIONS), function(i) tags$li(L(ASSUMPTIONS[i], ASSUMPTIONS_EN[i])))),
-                        p(class = "foot", L("수식, 탄력성 출처, 검증은 방법론 탭에 있습니다.",
-                                            "Formulas, elasticity sources and validation are in the Methodology tab."))))),
   page_foot()
 )
 
@@ -363,22 +396,34 @@ welfare_ui <- tagList(
           actionButton("to_method", L("산출 근거는 방법론에서 확인", "See the derivation in Methodology"), class = "btn-soft w-100"))
   ),
   layout_columns(
-    col_widths = c(6, 6),
-    xcard(L("단기와 장기 비교", "Short run vs. long run"), aside = L("단위: 억 원, 현재 가격 기준", "₩ bn at the current price"), id = "sec-srlr",
-          plotOutput("srlr_plot", height = 230),
-          uiOutput("reality_bar")),
+    col_widths = c(7, 5),
+    tab_card("welfare_alt", "sec-alt", L("가정이 바뀌면", "If assumptions change"),
+             nav_panel(L("기간별: 단기와 장기", "By horizon"), value = "srlr",
+                       p(class = "card-lead", L("단기와 장기 기본 탄력성에서 현재 가격의 후생 변화입니다 (억 원).",
+                                                "Welfare change at the current price under short- and long-run default elasticities (₩ bn).")),
+                       plotOutput("srlr_plot", height = 230),
+                       uiOutput("reality_bar")),
+             nav_panel(L("탄력성과 인상폭별", "By elasticity and increase"), value = "sens",
+                       p(class = "card-lead", L("공급탄력성과 인상폭이 클수록 사회 전체 손실이 커집니다 (사회 전체 ΔW, 억 원).",
+                                                "Larger supply elasticity and price increases mean larger total losses (total ΔW, ₩ bn).")),
+                       uiOutput("sens_tbl"),
+                       p(class = "foot", L("공급탄력성 낮음, 기준, 높음은 각각 ε 0.2, 0.5, 1.0이고, 인상폭은 도입 전 P* 대비입니다. 수요탄력성과 잉여 원유 처리는 현재 설정값을 씁니다. 굵은 테두리는 현재 설정과 가장 가까운 칸이고, 색이 진할수록 손실이 큽니다.",
+                                           "Low, base and high supply elasticity are ε 0.2, 0.5 and 1.0; increases are relative to pre-scheme P*. Demand elasticity and surplus handling use the current settings. The bold border marks the cell closest to the current setting; darker means a larger loss.")))),
     xcard(L("가계 파급 효과", "Household impact"), aside = L("월 추가 지출", "Extra monthly spending"), id = "sec-hh",
           uiOutput("hh_rows"))
   ),
-  xcard(L("공급탄력성과 인상폭이 클수록 사회 전체 손실이 커집니다", "Larger supply elasticity and price increases mean larger total welfare losses"),
-        aside = L("사회 전체 ΔW, 억 원", "Total ΔW, ₩ bn"), id = "sec-sens",
-        uiOutput("sens_tbl"),
-        p(class = "foot", L("공급탄력성 낮음, 기준, 높음은 각각 ε 0.2, 0.5, 1.0이고, 인상폭은 도입 전 P* 대비입니다. 수요탄력성과 잉여 원유 처리는 현재 설정값을 씁니다. 굵은 테두리는 현재 설정과 가장 가까운 칸이고, 색이 진할수록 손실이 큽니다.",
-                            "Low, base and high supply elasticity are ε 0.2, 0.5 and 1.0; increases are relative to pre-scheme P*. Demand elasticity and surplus handling use the current settings. The bold border marks the cell closest to the current setting; darker means a larger loss."))),
   page_foot()
 )
 
 # ---- 탭: 정책과 시장 -------------------------------------------------------
+policy_slide <- function(i) {
+  x <- POLICY_INFO[[i]]; e <- POLICY_INFO_EN[[i]]
+  div(class = "policy-item",
+      span(class = "policy-icon", bs_icon(x$bs)),
+      div(div(class = "policy-title", L(x$title, e$title)),
+          tags$ul(class = "note-list", lapply(seq_along(x$points), function(j)
+            tags$li(L(x$points[j], e$points[j], html = TRUE))))))
+}
 market_ui <- tagList(
   hero(L("정책과 시장", "Policy & market"),
        L("원유가격 연동제는<br>생산비가 오르면 수요와 관계없이 가격을 올립니다",
@@ -386,40 +431,35 @@ market_ui <- tagList(
   layout_columns(
     col_widths = c(6, 6),
     xcard(L("정책 개요", "Policy overview"), id = "sec-policy",
-          div(class = "policy-list", lapply(seq_along(POLICY_INFO), function(i) {
-            x <- POLICY_INFO[[i]]; e <- POLICY_INFO_EN[[i]]
-            div(class = "policy-item",
-                span(class = "policy-icon", bs_icon(x$bs)),
-                div(div(class = "policy-title", L(x$title, e$title)),
-                    tags$ul(class = "note-list", lapply(seq_along(x$points), function(j)
-                      tags$li(L(x$points[j], e$points[j], html = TRUE))))))
-          })),
+          carousel("cx-policy", lapply(seq_along(POLICY_INFO), policy_slide),
+                   vapply(POLICY_INFO, function(x) sub(":.*", "", x$title), ""),
+                   vapply(POLICY_INFO_EN, function(x) sub(":.*", "", x$title), "")),
           source_line(L(POLICY_SOURCE, POLICY_SOURCE_EN))),
-    xcard(L("원유 시장 구조와 가치사슬", "Raw milk market structure and value chain"), id = "sec-structure",
-          div(class = "chain", lapply(seq_len(nrow(VALUE_CHAIN)), function(i)
-            div(class = paste("chain-step", VALUE_CHAIN$scope[i]),
-                div(class = "chain-icon", art(VALUE_CHAIN$art[i], 112, 84, fallback = VALUE_CHAIN$li[i])),
-                div(class = "chain-name", L(VALUE_CHAIN$step[i], VALUE_CHAIN_EN$step[i])),
-                div(class = "chain-note", L(VALUE_CHAIN$note[i], VALUE_CHAIN_EN$note[i]))))),
-          div(class = "chain-bracket", L("분석 대상: 원유 거래 (낙농가 → 유가공업체)", "Analysed: raw milk trade (farms → processors)")),
-          uiOutput("structure_tbl"),
-          status_legend())
+    tab_card("market_price", "sec-price", L("원유가격의 변화", "Raw milk price over time"),
+             nav_panel(L("2013년 월별", "2013 by month"), value = "m2013",
+                       p(class = "card-lead", L("2013년 8월, 원유가격이 한 달 만에 96원/L 올랐습니다.",
+                                                "In August 2013 the raw milk price rose 96 KRW/L in one month.")),
+                       plotOutput("m2013_plot", height = 280),
+                       source_line(L("낙농진흥회 원유수취가격(전국, 2013년) 자료입니다. 점선은 모형의 P*와 연동제 가격입니다.",
+                                     "Korea Dairy Committee farm-gate price (national, 2013). Dashed lines are the model's P* and linked price."))),
+             nav_panel(L("2013-2025년 추이", "2013-2025 trend"), value = "trend",
+                       p(class = "card-lead", L("가격은 올랐고 생산량은 줄었습니다.", "Prices rose and output fell.")),
+                       plotOutput("trend_plot", height = 280),
+                       source_line(L("낙농진흥회 원유수취가격 연평균과 원유생산량(2013-2025년) 자료입니다. 2013년을 100으로 둔 지수이고, 실제 값은 '표'에 있습니다.",
+                                     "Korea Dairy Committee annual average farm-gate price and raw milk production, 2013-2025. Index with 2013 = 100; actual values are in 'Table'."))),
+             nav_panel(L("표", "Table"), value = "trend_tbl",
+                       div(class = "tbl-wrap", tableOutput("trend_tbl"))))
   ),
-  layout_columns(
-    col_widths = c(6, 6),
-    xcard(L("2013년 8월, 원유가격이 한 달 만에 96원/L 올랐습니다", "In August 2013 the raw milk price rose 96 KRW/L in one month"),
-          aside = L("원/L", "KRW/L"), id = "sec-m2013",
-          plotOutput("m2013_plot", height = 300),
-          source_line(L("낙농진흥회 원유수취가격(전국, 2013년) 자료입니다. 점선은 모형의 P*와 연동제 가격입니다.",
-                        "Korea Dairy Committee farm-gate price (national, 2013). Dashed lines are the model's P* and linked price."))),
-    div(id = "sec-trend", class = "anchor",
-        navset_card_underline(
-          title = span(class = "ch-title", L("가격은 올랐고 생산량은 줄었습니다 (2013-2025)", "Prices rose and output fell (2013-2025)")),
-          nav_panel(L("그래프", "Chart"), plotOutput("trend_plot", height = 300)),
-          nav_panel(L("표", "Table"), div(class = "tbl-wrap", tableOutput("trend_tbl"))),
-          footer = source_line(L("낙농진흥회 원유수취가격 연평균과 원유생산량(2013-2025년) 자료입니다. 그래프는 2013년을 100으로 둔 지수이고, 실제 값은 표에 있습니다.",
-                                 "Korea Dairy Committee annual average farm-gate price and raw milk production, 2013-2025. The chart is an index with 2013 = 100; actual values are in the table."))))
-  ),
+  xcard(L("원유 시장 구조와 가치사슬", "Raw milk market structure and value chain"), id = "sec-structure",
+        layout_columns(
+          col_widths = c(5, 7),
+          div(div(class = "chain", lapply(seq_len(nrow(VALUE_CHAIN)), function(i)
+                div(class = paste("chain-step", VALUE_CHAIN$scope[i]),
+                    div(class = "chain-icon", art(VALUE_CHAIN$art[i], 112, 84, fallback = VALUE_CHAIN$li[i])),
+                    div(class = "chain-name", L(VALUE_CHAIN$step[i], VALUE_CHAIN_EN$step[i])),
+                    div(class = "chain-note", L(VALUE_CHAIN$note[i], VALUE_CHAIN_EN$note[i]))))),
+              div(class = "chain-bracket", L("분석 대상: 원유 거래 (낙농가 → 유가공업체)", "Analysed: raw milk trade (farms → processors)"))),
+          div(uiOutput("structure_tbl"), status_legend()))),
   xcard(L("2013년 기준선", "2013 baseline"), id = "sec-baseline",
         uiOutput("baseline_tbl"),
         div(class = "st-row", status_legend(),
@@ -451,54 +491,63 @@ method_ui <- tagList(
               eqn(as.character(L("이전효율", "Transfer efficiency")), " = ΔPS / (G − ΔCS)"),
               h3(L("5. 가계 파급 (원유가 → 소매가 전가)", "5. Household impact (raw milk → retail pass-through)")),
               eqn("%ΔP<sub>retail</sub> ≈ S<sub>a</sub> × %ΔP<sub>farm</sub>"))),
-    xcard(L("가정", "Assumptions"), id = "sec-assume2",
-          tags$ul(class = "assume", lapply(seq_along(ASSUMPTIONS), function(i) tags$li(L(ASSUMPTIONS[i], ASSUMPTIONS_EN[i])))))
+    tab_card("method_valid", "sec-valid", L("모형 검증", "Model validation"),
+             nav_panel(L("강의 공식 대조", "Lecture formulas"), value = "lecture",
+                       p(class = "card-lead", L(VALIDATION_CASE$label, VALIDATION_LABEL_EN)),
+                       div(class = "tbl-wrap", tableOutput("valid_tbl")),
+                       p(class = "foot", L("L11 Supply Policy 6쪽: ΔCS = −(a+b), ΔPS = a+b+c, G = b+c+d+e, Net = −(b+d+e), 재판매 시 G = (Ps − v)(Qs − Qd)",
+                                           "L11 Supply Policy p.6: ΔCS = −(a+b), ΔPS = a+b+c, G = b+c+d+e, Net = −(b+d+e), with resale G = (Ps − v)(Qs − Qd)"))),
+             nav_panel(L("현재 설정 검산", "Current setting"), value = "check",
+                       p(class = "card-lead", L("같은 ΔW를 면적 공식과 곡선 아래 적분, 두 방법으로 계산해 비교합니다 (억 원).",
+                                                "The same ΔW computed two ways: area formulas and integration under the curves (₩ 100M).")),
+                       div(class = "tbl-wrap", tableOutput("check_tbl"))))
   ),
   layout_columns(
-    col_widths = c(6, 6),
-    xcard(L("모형 검증: 강의 L11 공식과 일치합니다", "Model validation: matches the L11 lecture formulas"), id = "sec-valid",
-          p(class = "card-lead", L(VALIDATION_CASE$label, VALIDATION_LABEL_EN)),
-          div(class = "tbl-wrap", tableOutput("valid_tbl")),
-          p(class = "foot", L("L11 Supply Policy 6쪽: ΔCS = −(a+b), ΔPS = a+b+c, G = b+c+d+e, Net = −(b+d+e), 재판매 시 G = (Ps − v)(Qs − Qd)",
-                              "L11 Supply Policy p.6: ΔCS = −(a+b), ΔPS = a+b+c, G = b+c+d+e, Net = −(b+d+e), with resale G = (Ps − v)(Qs − Qd)"))),
-    div(class = "stack",
-        xcard(L("현재 설정의 독립 검산", "Independent check of the current setting"), aside = L("억 원", "₩ 100M"), id = "sec-check",
-              p(class = "card-lead", L("같은 ΔW를 면적 공식과 곡선 아래 적분, 두 방법으로 계산해 비교합니다.",
-                                       "The same ΔW computed two ways: area formulas and integration under the curves.")),
-              div(class = "tbl-wrap", tableOutput("check_tbl"))),
-        xcard(L("자료 출처", "Data sources"), id = "sec-sources",
-              uiOutput("source_tbl"),
-              source_line(L("낙농진흥회 낙농통계광장: dairy.or.kr › 낙농통계광장 › 국내통계",
-                            "Korea Dairy Committee dairy statistics: dairy.or.kr › statistics › domestic"))))
+    col_widths = c(5, 7),
+    xcard(L("가정", "Assumptions"), id = "sec-assume2", assume_carousel("cx-assume-method")),
+    tab_card("method_data", "sec-data", L("자료", "Data"),
+             nav_panel(L("자료 출처", "Sources"), value = "sources",
+                       uiOutput("source_tbl"),
+                       source_line(L("낙농진흥회 낙농통계광장: dairy.or.kr › 낙농통계광장 › 국내통계",
+                                     "Korea Dairy Committee dairy statistics: dairy.or.kr › statistics › domestic"))),
+             nav_panel(L("탄력성 표", "Elasticity table"), value = "elast",
+                       uiOutput("elast_tbl"),
+                       status_legend()))
   ),
-  xcard(L("탄력성 표", "Elasticity table"), id = "sec-elast",
-        uiOutput("elast_tbl"),
-        status_legend()),
   page_foot()
 )
 
 # ---- 상단 메뉴: 마우스를 올리면 탭 안의 구역 목록이 펼쳐진다 -----------------------------
+# c(이동할 구역 id, 한국어, 영어, 묶인 카드 안에서 열 탭 "카드id:탭값")
 NAV_SECTIONS <- list(
-  sim = list(c("sec-kpi", "핵심 지표", "Key results"), c("sec-story", "해석", "Interpretation"),
-             c("sec-sd", "수요와 공급, 후생 면적", "Supply, demand and welfare areas"),
-             c("sec-whatif", "가격과 탄력성이 바뀌면", "If price or elasticity changes"),
-             c("sec-market", "원유 시장 결과", "Raw milk market outcome"),
-             c("sec-elnow", "사용 중인 탄력성", "Elasticities in use"), c("sec-assume", "이 결과의 가정", "Assumptions")),
-  welfare = list(c("sec-stake", "이해관계자별 후생 변화", "Welfare change by stakeholder"),
-                 c("sec-metric", "주요 지표", "Key indicators"), c("sec-srlr", "단기와 장기 비교", "Short run vs. long run"),
-                 c("sec-hh", "가계 파급 효과", "Household impact"), c("sec-sens", "민감도 표", "Sensitivity table")),
-  market = list(c("sec-policy", "정책 개요", "Policy overview"), c("sec-structure", "시장 구조와 가치사슬", "Market structure"),
-                c("sec-m2013", "2013년 월별 원유가격", "2013 monthly price"), c("sec-trend", "가격과 생산량 추이", "Price and output trend"),
-                c("sec-baseline", "2013년 기준선", "2013 baseline")),
-  method = list(c("sec-eq", "수식", "Formulas"), c("sec-assume2", "가정", "Assumptions"), c("sec-valid", "모형 검증", "Model validation"),
-                c("sec-check", "독립 검산", "Independent check"), c("sec-sources", "자료 출처", "Data sources"),
-                c("sec-elast", "탄력성 표", "Elasticity table"))
+  sim = list(c("sec-kpi", "핵심 지표", "Key results", ""), c("sec-story", "해석", "Interpretation", ""),
+             c("sec-sd", "수요와 공급, 후생 면적", "Supply, demand and welfare areas", ""),
+             c("sec-whatif", "가격과 탄력성이 바뀌면", "If price or elasticity changes", ""),
+             c("sec-detail", "원유 시장 결과", "Market outcome", "sim_detail:market"),
+             c("sec-detail", "사용 중인 탄력성", "Elasticities in use", "sim_detail:elast"),
+             c("sec-assume", "이 결과의 가정", "Assumptions", "")),
+  welfare = list(c("sec-stake", "이해관계자별 후생 변화", "Welfare change by stakeholder", ""),
+                 c("sec-metric", "주요 지표", "Key indicators", ""),
+                 c("sec-alt", "단기와 장기 비교", "Short run vs. long run", "welfare_alt:srlr"),
+                 c("sec-alt", "민감도 표", "Sensitivity table", "welfare_alt:sens"),
+                 c("sec-hh", "가계 파급 효과", "Household impact", "")),
+  market = list(c("sec-policy", "정책 개요", "Policy overview", ""),
+                c("sec-price", "2013년 월별 원유가격", "2013 monthly price", "market_price:m2013"),
+                c("sec-price", "가격과 생산량 추이", "Price and output trend", "market_price:trend"),
+                c("sec-structure", "시장 구조와 가치사슬", "Market structure", ""),
+                c("sec-baseline", "2013년 기준선", "2013 baseline", "")),
+  method = list(c("sec-eq", "수식", "Formulas", ""),
+                c("sec-valid", "모형 검증", "Model validation", "method_valid:lecture"),
+                c("sec-valid", "독립 검산", "Independent check", "method_valid:check"),
+                c("sec-assume2", "가정", "Assumptions", ""),
+                c("sec-data", "자료 출처", "Data sources", "method_data:sources"),
+                c("sec-data", "탄력성 표", "Elasticity table", "method_data:elast"))
 )
 NAV_DROPS <- div(id = "nav-drops", hidden = NA, lapply(names(NAV_SECTIONS), function(tab)
   div(class = "nav-drop", `data-tab` = tab, role = "menu",
       lapply(NAV_SECTIONS[[tab]], function(s)
         tags$a(href = paste0("#", s[1]), class = "nav-drop-item", role = "menuitem", `data-tab` = tab, `data-target` = s[1],
-               L(s[2], s[3]))))))
+               `data-subtab` = s[4], L(s[2], s[3]))))))
 
 # ---- 전체 화면 ----------------------------------------------------------------------
 ui <- function(request) {
