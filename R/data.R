@@ -65,27 +65,43 @@ HOUSEHOLD <- data.frame(
 
 # ---- 정책 설명 (Part 1) ---------------------------------------------
 # icon: fontawesome 아이콘 이름
-# points: 노트 정리 형식의 짧은 항목. <b>핵심어</b>, <u>숫자, 기간</u> (밑줄은 형광펜 모양으로 표시)
+# 글쓰기 기준
+#   kv     = 항목: 값. 정의, 사실, 수치, 주체처럼 이름 하나에 값 하나가 대응할 때. 값은 명사구로 쓴다.
+#   points = 문장. 이유, 목적, 한계, 해석처럼 설명이 필요할 때. 합니다체로 쓴다.
+# 각 항목은 c(한국어, 영어). kv는 c(항목, 값, 영어 항목, 영어 값). <b>핵심어</b>, <u>숫자</u> 사용 가능
 POLICY_INFO <- list(
-  list(bs = "bullseye", title = "목표", points = c(
-    "<b>낙농가 소득</b>과 <b>원유 수급</b>을 안정시키는 것이 목표입니다.",
-    "예전에는 생산자와 유업체가 <u>3~5년마다</u> 협상해 가격을 정했고, 협상 때마다 갈등이 생겼습니다.",
-    "그래서 <b>생산비 변동을 가격에 자동으로 반영</b>하도록 바꿨습니다.")),
-  list(bs = "gear", title = "작동 방식", points = c(
-    "<b>원유기본가격 = 기준원가 + 변동원가</b>입니다.",
-    "기준원가에는 <b>통계청 우유생산비</b> 증감을, 변동원가에는 <b>소비자물가 상승률</b>을 반영합니다.",
-    "유업체는 농가별 <b>쿼터 물량</b>을 이 가격에 사들입니다.")),
-  list(bs = "bank", title = "운영 주체", points = c(
-    "<b>낙농진흥회</b>는 가격을 결정하고 원유를 모읍니다.",
-    "<b>농림축산식품부</b>는 제도를 설계합니다.",
-    "<b>유가공업체</b>는 원유를 사들입니다.")),
-  list(bs = "rulers", title = "규모와 변화", points = c(
-    "2013년 8월 첫 적용 때 전국 원유수취가격이 <u>965.10원에서 1,061.55원</u>으로 <b>한 달 만에 96.45원</b> 올랐습니다.",
-    "연평균 가격은 <u>2013년 1,022.92원에서 2025년 1,249.81원</u>으로 올랐습니다.")),
-  list(bs = "exclamation-triangle", title = "한계: 사실상의 가격하한", points = c(
-    "수요가 줄어도 생산비가 오르면 <b>가격을 낮출 수 없습니다</b>.",
-    "<u>2002년</u>에 도입된 <b>쿼터제</b> 때문에 유업체는 정해진 물량을 의무적으로 사야 합니다.",
-    "그래서 이 앱은 연동제를 <b>가격하한</b>으로 모형화합니다."))
+  list(bs = "bullseye", title = c("목표", "Goal"),
+       points = list(
+         c("<b>낙농가 소득</b>과 <b>원유 수급</b>을 안정시키는 것이 목표입니다.",
+           "The goal is to stabilise <b>dairy farm income</b> and the <b>raw milk supply</b>."),
+         c("예전에는 생산자와 유업체가 <u>3~5년마다</u> 협상해 가격을 정했고, 협상 때마다 갈등이 생겼습니다.",
+           "Producers and processors used to negotiate the price <u>every 3 to 5 years</u>, and each round caused conflict."),
+         c("그래서 <b>생산비 변동을 가격에 자동으로 반영</b>하도록 바꿨습니다.",
+           "The scheme now <b>passes changes in production cost into the price automatically</b>."))),
+  list(bs = "gear", title = c("작동 방식", "How it works"),
+       kv = list(
+         c("산식", "원유기본가격 = 기준원가 + 변동원가", "Formula", "Base price = base cost + variable cost"),
+         c("기준원가", "통계청 우유생산비 증감 반영", "Base cost", "Follows Statistics Korea milk production cost"),
+         c("변동원가", "소비자물가 상승률 반영", "Variable cost", "Follows consumer price inflation"),
+         c("매입 물량", "농가별 쿼터 물량", "Volume bought", "Each farm's quota volume"))),
+  list(bs = "bank", title = c("운영 주체", "Who runs it"),
+       kv = list(
+         c("낙농진흥회", "가격 결정, 집유", "Korea Dairy Committee", "Sets the price, collects milk"),
+         c("농림축산식품부", "제도 설계", "Ministry of Agriculture", "Designs the scheme"),
+         c("유가공업체", "원유 매입", "Dairy processors", "Buy raw milk"))),
+  list(bs = "rulers", title = c("규모와 변화", "Scale and change"),
+       kv = list(
+         c("첫 적용", "2013년 8월", "First applied", "August 2013"),
+         c("한 달 인상", "965.10원 → 1,061.55원 (+96.45원/L)", "One-month rise", "965.10 → 1,061.55 KRW/L (+96.45)"),
+         c("연평균 가격", "1,022.92원(2013) → 1,249.81원(2025)", "Annual average", "1,022.92 (2013) → 1,249.81 KRW/L (2025)"))),
+  list(bs = "exclamation-triangle", title = c("한계: 사실상의 가격하한", "Limitation: a de facto price floor"),
+       points = list(
+         c("수요가 줄어도 생산비가 오르면 <b>가격을 낮출 수 없습니다</b>.",
+           "When costs rise, <b>the price cannot fall</b> even if demand falls."),
+         c("<u>2002년</u>에 도입된 <b>쿼터제</b> 때문에 유업체는 정해진 물량을 의무적으로 사야 합니다.",
+           "Under the <b>quota system</b> introduced in <u>2002</u>, processors must buy fixed volumes."),
+         c("그래서 이 앱은 연동제를 <b>가격하한</b>으로 모형화합니다.",
+           "This app therefore models the scheme as a <b>price floor</b>.")))
 )
 POLICY_SOURCE <- "산출 공식과 도입 배경은 정부 정책 블로그(정책브리핑, blog.naver.com/hellopolicy/220156198742), 규모와 변화는 낙농진흥회 낙농통계광장 자료입니다."
 
@@ -103,12 +119,12 @@ VALUE_CHAIN <- data.frame(
 STRUCTURE_TBL <- data.frame(
   항목 = c("분석 시장 수준", "원유 판매자", "원유 구매자 집중도 (유업체 CR4)",
            "원유 무역", "국경 조치 구속 여부", "저장성", "경쟁 가정의 타당성"),
-  내용 = c("농가 출하 단계의 원유입니다 (원/L, 천 톤).",
-           "쿼터를 가진 낙농가입니다. 집유는 낙농진흥회와 조합이 맡습니다.",
+  내용 = c("농가 출하 단계 원유 (원/L, 천 톤)",
+           "쿼터를 가진 낙농가 (집유: 낙농진흥회, 조합)",
            "미입력",
            "원유는 쉽게 상해서 거의 교역되지 않습니다. 치즈, 분유 같은 유제품 형태로 수입됩니다.",
            "유제품 FTA 관세 철폐 일정을 확인해야 합니다.",
-           "원유는 냉장으로 2~3일 보관됩니다. 남는 원유는 분유로 바꿔야 저장할 수 있습니다.",
+           "냉장 2~3일 (장기 저장은 분유로 전환해야 가능)",
            "구매 측 과점 여부를 CR4로 점검해야 합니다."),
   상태 = c("확인 필요", "확인 필요", "임시 값", "확인 필요", "확인 필요", "확인 필요", "임시 값"),
   check.names = FALSE
@@ -146,17 +162,64 @@ SCENARIOS <- data.frame(
   check.names = FALSE
 )
 
-# ---- 모형 가정 (시뮬레이터 접이식 상자, 방법론 탭 공용) ------------------------
-ASSUMPTIONS <- c(
-  "분석 대상은 농가 출하 단계의 원유(가공 전 우유) 시장입니다. 판매자는 낙농가, 구매자는 유가공업체입니다.",
-  "기준연도는 2013년입니다. 연동제 도입 전(1-7월) 평균 수취가격을 균형가격 P*로, 도입 후(8-12월) 평균을 연동제 가격으로 봅니다. 도입 전에도 쿼터와 협상가격이 있었다는 한계가 있습니다.",
-  "가격은 낙농진흥회 '원유수취가격'(기본가격 + 성분과 위생 인센티브)을 씁니다. 정책이 정하는 기본가격과는 차이가 있습니다.",
-  "원유는 부패성이 높아 국제 교역이 거의 없으므로 국내 폐쇄 시장으로 봅니다.",
-  "연동제 가격은 수요가 줄어도 내려가지 않으므로 가격하한(wedge)으로 둡니다. 낙농가 수취가격과 유업체 구매가격은 모두 Ps로 같고, 공급량과 수요량 사이에 수량 쐐기(Qs − Qd)가 생깁니다. 남는 원유는 매입 후 분유로 전환해 처분가치 Pv를 회수합니다.",
-  "잉여 매입 비용은 강의 모형처럼 정부가 내거나(기본), 쿼터 의무 매입처럼 유업체가 냅니다. 부담 주체는 분배만 바꾸고 순후생은 같습니다.",
-  "원유 수요와 공급은 기준점 근방에서 선형입니다. 수량 환산은 원유 1톤 ≈ 1,000L로 합니다.",
-  "단기와 장기는 원유 공급탄력성과 소매 수요탄력성의 차이로만 구분합니다.",
-  "가계 부담은 원유가 상승분이 Sa 비율로 흰 우유 소매가에 전가된다고 보는 파급 효과 근사치입니다. 탄력성을 쓰지 않으므로 단기와 장기의 가계 부담은 같습니다."
+# ---- 모형 가정 (주제별 묶음. 사실은 kv, 이유와 한계는 문장) ------------------------
+ASSUMPTION_GROUPS <- list(
+  list(title = c("시장과 곡선", "Market and curves"),
+       kv = list(
+         c("분석 대상", "농가 출하 단계의 원유 시장", "Market", "Farm-gate raw milk market"),
+         c("판매자", "낙농가", "Sellers", "Dairy farms"),
+         c("구매자", "유가공업체", "Buyers", "Dairy processors"),
+         c("시장 형태", "국내 폐쇄 시장", "Market type", "Closed domestic market"),
+         c("곡선 형태", "기준점 근방에서 선형", "Curves", "Linear near the base point"),
+         c("수량 환산", "원유 1톤 ≈ 1,000L", "Unit conversion", "1 tonne of raw milk ≈ 1,000 L")),
+       points = list(
+         c("원유는 쉽게 상해서 국제 교역이 거의 없기 때문에 폐쇄 시장으로 봅니다.",
+           "Raw milk spoils quickly and is hardly traded internationally, so the market is treated as closed."))),
+  list(title = c("기준연도와 가격", "Base year and prices"),
+       kv = list(
+         c("기준연도", "2013년 (연동제 첫 적용)", "Base year", "2013 (first year of the scheme)"),
+         c("균형가격 P*", "도입 전(1-7월) 평균 원유수취가격", "Equilibrium price P*", "Average farm-gate price before the scheme (Jan-Jul)"),
+         c("연동제 가격 Ps", "도입 후(8-12월) 평균 원유수취가격", "Linked price Ps", "Average farm-gate price after the scheme (Aug-Dec)"),
+         c("가격 자료", "낙농진흥회 원유수취가격 (기본가격 + 성분과 위생 인센티브)", "Price data", "KDC farm-gate price (base price + component and hygiene incentives)")),
+       points = list(
+         c("도입 전에도 쿼터와 협상가격이 있었으므로, 도입 전 가격이 완전한 시장균형은 아닙니다.",
+           "Quotas and negotiated prices existed before the scheme, so the pre-scheme price is not a pure market equilibrium."),
+         c("원유수취가격은 정책이 정하는 기본가격과 차이가 있습니다.",
+           "The farm-gate price differs from the policy base price."))),
+  list(title = c("가격하한과 비용", "Price floor and costs"),
+       kv = list(
+         c("가격", "낙농가 수취가격 = 유업체 구매가격 = Ps", "Price", "Farm price = processor price = Ps"),
+         c("수량 쐐기", "남는 원유 Qs − Qd", "Quantity wedge", "Surplus Qs − Qd"),
+         c("남는 원유 처리", "매입 후 분유로 전환, 처분가치 Pv 회수", "Surplus handling", "Bought and turned into powder, salvage value Pv"),
+         c("비용 부담", "정부(기본, 강의 모형) 또는 유업체(쿼터 의무 매입)", "Who pays", "Government (default, lecture model) or processors (quota purchase)")),
+       points = list(
+         c("연동제 가격은 수요가 줄어도 내려가지 않으므로 가격하한(wedge)으로 모형화합니다.",
+           "The linked price does not fall when demand falls, so it is modelled as a price floor (wedge)."),
+         c("비용을 누가 내는지는 분배만 바꾸고, 사회 전체 후생 변화는 같습니다.",
+           "Who pays changes only the distribution; the total welfare change is the same."))),
+  list(title = c("기간과 가계", "Horizon and households"),
+       kv = list(
+         c("단기와 장기", "원유 공급탄력성 ε와 소매 수요탄력성 η의 차이로만 구분", "Short vs. long run", "Differ only in supply elasticity ε and retail demand elasticity η"),
+         c("가계 부담", "원유가 상승분 × Sa만큼 흰 우유 소매가에 전가 (근사)", "Household burden", "Raw milk price rise × Sa passed into white milk retail price (approximation)")),
+       points = list(
+         c("가계 부담 계산에는 탄력성을 쓰지 않으므로 단기와 장기 결과가 같습니다.",
+           "Elasticities are not used for the household burden, so short- and long-run results are the same.")))
+)
+
+# ---- 분석 개요 (방법론 > 분석 개요) ----------------------------------------
+ABOUT_KV <- list(
+  c("과목", "식품가격분석론 (LESE412)", "Course", "Food Price Analysis (LESE412)"),
+  c("팀", "Group 4", "Team", "Group 4"),
+  c("팀원", "정진욱, 최재령, 이수현, 배현민", "Members", "정진욱, 최재령, 이수현, 배현민"),
+  c("사용자", "농림축산식품부 낙농 정책 담당 분석가", "User", "Dairy policy analyst, Ministry of Agriculture"),
+  c("분석 시장", "농가 출하 단계의 원유 시장 (원/L, 천 톤)", "Market", "Farm-gate raw milk market (KRW/L, kt)"),
+  c("기준연도", "2013년", "Base year", "2013")
+)
+ABOUT_POINTS <- list(
+  c("연동제로 원유가격이 오르면 낙농가 소득 보전(ΔPS)에 비해 유가공업체와 소비자의 손실, 잉여 원유 처리 비용은 단기와 장기에 각각 얼마이며, 저소득층과 고소득층 가계의 실질 부담은 어느 수준인지 분석합니다.",
+    "When the scheme raises the raw milk price, we analyse how large processor and consumer losses and surplus handling costs are relative to farm income support (ΔPS) in the short and long run, and the real burden on low- and high-income households."),
+  c("2013년은 연동제가 처음 적용된 해라서 도입 전(1-7월)과 도입 후(8-12월) 가격을 모두 관측할 수 있습니다.",
+    "2013 is the first year of the scheme, so prices both before (Jan-Jul) and after (Aug-Dec) are observed.")
 )
 
 # ---- 방법론 페이지 출처 목록 -------------------------------------------
