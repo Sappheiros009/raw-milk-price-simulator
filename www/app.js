@@ -35,33 +35,40 @@
   }
 
   /* ---- 2) 상단 메뉴 펼침 목록 ---- */
-  // 묶인 카드 안의 탭 열기: "카드id:탭값"
+  // 서브 페이지 열기: "sub_탭:값" (숨김 탭의 링크를 Bootstrap 탭으로 연다)
   function openSubtab(sub) {
     if (!sub) return;
     var parts = sub.split(':');
-    var a = document.querySelector('#' + parts[0] + ' a[data-value="' + parts[1] + '"]') ||
-            document.querySelector('[data-tabsetid] a[data-value="' + parts[1] + '"]');
+    var a = document.querySelector('#' + parts[0] + ' a[data-value="' + parts[1] + '"]');
     if (a && !a.classList.contains('active')) bootstrap.Tab.getOrCreateInstance(a).show();
+  }
+  // 내용은 가운데 영역(.main) 안에서 스크롤되므로 그 영역과 창을 함께 맨 위로 올린다
+  function toTop() {
+    var m = document.querySelector('.bslib-sidebar-layout > .main');
+    if (m) m.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+  // 왼쪽 메뉴의 현재 항목 표시를 실제 열린 서브 페이지와 맞춘다
+  function syncLnb() {
+    document.querySelectorAll('.nav-hidden.shiny-tab-input').forEach(function (ul) {
+      var act = ul.querySelector('a.active');
+      if (!act) return;
+      var key = ul.id + ':' + act.getAttribute('data-value');
+      document.querySelectorAll('.lnb-item[data-sub^="' + ul.id + ':"]').forEach(function (it) {
+        var on = it.getAttribute('data-sub') === key;
+        it.classList.toggle('active', on);
+        if (on) it.setAttribute('aria-current', 'page'); else it.removeAttribute('aria-current');
+      });
+    });
   }
   function goTab(tab, target, sub) {
     var link = document.querySelector('.navbar a.nav-link[data-value="' + tab + '"]');
     if (!link) return;
     openSubtab(sub);
-    var go = function () {
-      var el = target && document.getElementById(target);
-      if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
-      else { var m = document.querySelector('.bslib-sidebar-layout > .main'); if (m) m.scrollTo({ top: 0, behavior: 'smooth' }); window.scrollTo({ top: 0, behavior: 'smooth' }); }
-    };
-    if (link.classList.contains('active')) { go(); return; }
-    // 숨어 있던 탭의 그래프·표는 탭이 열린 뒤에 그려져 높이가 바뀐다. 다 그려지면(shiny:idle) 한 번 더 맞춘다.
-    link.addEventListener('shown.bs.tab', function once() {
-      link.removeEventListener('shown.bs.tab', once);
-      setTimeout(go, 60);
-      if (window.jQuery) jQuery(document).one('shiny:idle', function () { setTimeout(go, 50); });
-      setTimeout(go, 900);
-    });
-    bootstrap.Tab.getOrCreateInstance(link).show();
+    if (!link.classList.contains('active')) bootstrap.Tab.getOrCreateInstance(link).show();
+    setTimeout(toTop, 30);
   }
+
   function buildNavDrops() {
     var mega = document.getElementById('nav-mega');
     var nav = document.querySelector('.bslib-page-navbar > .navbar');
@@ -91,7 +98,11 @@
     window.addEventListener('resize', place);
     if (document.fonts && document.fonts.ready) document.fonts.ready.then(place);
     setTimeout(place, 500);
-    var close = function () { nav.classList.add('mega-closed'); setTimeout(function () { nav.classList.remove('mega-closed'); }, 400); };
+    // 메뉴를 닫고, 마우스가 상단 바를 벗어난 뒤에야 다시 열리게 한다
+    // (탭을 누른 뒤 아래 왼쪽 메뉴로 내려가는 길에 넓은 메뉴가 다시 펼쳐져 가리지 않도록)
+    var close = function () { nav.classList.add('mega-closed'); };
+    nav.addEventListener('mouseleave', function () { nav.classList.remove('mega-closed'); });
+    document.querySelectorAll('.navbar a.nav-link[data-value]').forEach(function (l) { l.addEventListener('click', close); });
     document.addEventListener('click', function (e) {
       var a = e.target.closest('.nav-drop-item');
       if (!a) return;
@@ -184,7 +195,33 @@
       if (n.value !== '') n.value = (+n.value).toFixed(decimals(n.step || 1));
     });
   }
+  function bindLnb() {
+    document.addEventListener('click', function (e) {
+      var it = e.target.closest('.lnb-item');
+      if (!it) return;
+      e.preventDefault();
+      openSubtab(it.getAttribute('data-sub'));
+      syncLnb(); toTop();
+    });
+    // 서브 페이지가 어떤 경로로 바뀌든(상단 메뉴, 서버, 설정 링크) 왼쪽 메뉴를 맞춘다
+    document.addEventListener('shown.bs.tab', function () { syncLnb(); setBodyTab(); });
+  }
+  // 현재 상단 탭을 body에 표시 (설정 단추를 시뮬레이션 탭에서만 보이게 하는 데 쓴다)
+  function setBodyTab() {
+    var a = document.querySelector('.navbar a.nav-link.active[data-value]');
+    if (a) document.body.setAttribute('data-tab', a.getAttribute('data-value'));
+  }
+  // 언어 단추를 상단 바 오른쪽 끝으로 옮긴다: 탭 목록만 가운데에 오도록
+  function placeLang() {
+    var holder = document.getElementById('lang-holder');
+    var bar = document.querySelector('.bslib-page-navbar > .navbar > .container-fluid');
+    if (holder && bar) { bar.appendChild(holder); holder.classList.add('placed'); }
+  }
+
   document.addEventListener('DOMContentLoaded', function () {
+    placeLang();
+    bindLnb();
+    setBodyTab();
     formatNums();
     buildNavDrops();
     initCarousels();
